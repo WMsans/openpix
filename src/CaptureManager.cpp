@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <cstring>
+#include <algorithm>
 
 #include <QCoreApplication>
 #include <QDBusConnection>
@@ -121,7 +122,7 @@ void CaptureManager::registryGlobal(void *data, wl_registry *registry,
     auto *self = static_cast<CaptureManager *>(data);
     if (strcmp(interface, zwlr_screencopy_manager_v1_interface.name) == 0) {
         self->m_wlr.screencopyManager = static_cast<zwlr_screencopy_manager_v1 *>(
-            wl_registry_bind(registry, name, &zwlr_screencopy_manager_v1_interface, 3));
+            wl_registry_bind(registry, name, &zwlr_screencopy_manager_v1_interface, std::min(version, 3u)));
     } else if (strcmp(interface, wl_shm_interface.name) == 0) {
         self->m_wlr.shm = static_cast<wl_shm *>(
             wl_registry_bind(registry, name, &wl_shm_interface, 1));
@@ -173,11 +174,24 @@ void CaptureManager::frameBufferDone(void *data, zwlr_screencopy_frame_v1 *frame
     self->m_wlr.shmPool = wl_shm_create_pool(self->m_wlr.shm,
                                                self->m_wlr.shmFd,
                                                self->m_wlr.shmSize);
+    if (!self->m_wlr.shmPool) {
+        munmap(self->m_wlr.shmData, self->m_wlr.shmSize);
+        close(self->m_wlr.shmFd);
+        self->m_wlr.copyFailed = true;
+        return;
+    }
     self->m_wlr.buffer = wl_shm_pool_create_buffer(self->m_wlr.shmPool, 0,
                                                      self->m_wlr.width,
                                                      self->m_wlr.height,
                                                      self->m_wlr.stride,
                                                      self->m_wlr.format);
+    if (!self->m_wlr.buffer) {
+        wl_shm_pool_destroy(self->m_wlr.shmPool);
+        munmap(self->m_wlr.shmData, self->m_wlr.shmSize);
+        close(self->m_wlr.shmFd);
+        self->m_wlr.copyFailed = true;
+        return;
+    }
 
     zwlr_screencopy_frame_v1_copy(frame, self->m_wlr.buffer);
 }
@@ -285,10 +299,12 @@ void CaptureManager::captureViaWlrScreencopy()
 
     QImage result = image.copy();
 
-    if (m_wlr.flags & 1) {
+    if (m_wlr.flags & ZWLR_SCREENCOPY_FRAME_V1_FLAGS_Y_INVERT) {
         result = result.flipped(Qt::Vertical);
     }
 
+    wl_buffer_destroy(m_wlr.buffer);
+    wl_shm_pool_destroy(m_wlr.shmPool);
     munmap(m_wlr.shmData, m_wlr.shmSize);
     close(m_wlr.shmFd);
     zwlr_screencopy_frame_v1_destroy(frame);
