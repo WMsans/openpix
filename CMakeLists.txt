@@ -71,8 +71,8 @@ set(RAPIDOCR_SOURCES
 # --- Main executable ---
 add_executable(openpix
     src/main.cpp
+    src/CaptureManager.cpp
     # TODO: Add as implemented
-    # src/CaptureManager.cpp
     # src/OverlayWidget.cpp
     # src/Toolbar.cpp
     # src/AnnotationManager.cpp
