@@ -269,10 +269,10 @@ void CaptureManager::captureViaWlrScreencopy()
 
     QImage::Format qFormat;
     switch (m_wlr.format) {
-    case 0:
+    case WL_SHM_FORMAT_ARGB8888:
         qFormat = QImage::Format_ARGB32;
         break;
-    case 1:
+    case WL_SHM_FORMAT_XRGB8888:
         qFormat = QImage::Format_RGB32;
         break;
     default:
