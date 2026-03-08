@@ -1,5 +1,6 @@
 #include "OverlayWidget.h"
 #include "Toolbar.h"
+#include "AnnotationManager.h"
 #include <QPainter>
 #include <QPainterPath>
 #include <QMouseEvent>
@@ -11,6 +12,7 @@
 OverlayWidget::OverlayWidget(const QImage &screenshot, QWidget *parent)
     : QWidget(parent)
     , m_screenshot(screenshot)
+    , m_annotationManager(std::make_unique<AnnotationManager>())
 {
     setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::BypassWindowManagerHint);
     setAttribute(Qt::WA_TranslucentBackground, false);
@@ -31,6 +33,9 @@ OverlayWidget::OverlayWidget(const QImage &screenshot, QWidget *parent)
     connect(m_toolbar, &Toolbar::ocrRequested, this, &OverlayWidget::onOcrRequested);
     connect(m_toolbar, &Toolbar::annotateRequested, this, &OverlayWidget::onAnnotateRequested);
     connect(m_toolbar, &Toolbar::scrollCaptureRequested, this, &OverlayWidget::onScrollCaptureRequested);
+    connect(m_toolbar, &Toolbar::annotationToolChanged, this, &OverlayWidget::onAnnotationToolChanged);
+    connect(m_toolbar, &Toolbar::undoRequested, this, &OverlayWidget::onUndoRequested);
+    connect(m_toolbar, &Toolbar::annotationDone, this, &OverlayWidget::onAnnotationDone);
     m_toolbar->hide();
 
     show();
@@ -40,7 +45,11 @@ OverlayWidget::OverlayWidget(const QImage &screenshot, QWidget *parent)
 QImage OverlayWidget::croppedImage() const
 {
     if (m_selection.isValid()) {
-        return m_screenshot.copy(m_selection);
+        QImage base = m_screenshot.copy(m_selection);
+        if (m_annotationManager && m_annotationManager->hasAnnotations()) {
+            return m_annotationManager->composite(m_screenshot, m_selection);
+        }
+        return base;
     }
     return QImage();
 }
@@ -65,6 +74,10 @@ void OverlayWidget::paintEvent(QPaintEvent *event)
     painter.setClipPath(path);
     painter.fillRect(rect(), QColor(0, 0, 0, 128));
     painter.setClipping(false);
+
+    if (m_annotationManager && m_annotationMode) {
+        m_annotationManager->paint(painter, m_selection);
+    }
 
     QPen borderPen(QColor(255, 255, 255), 1, Qt::DashLine);
     painter.setPen(borderPen);
@@ -184,6 +197,16 @@ void OverlayWidget::mousePressEvent(QMouseEvent *event)
         return;
     }
 
+    if (m_annotationMode && m_selection.contains(event->pos())) {
+        m_state = State::Annotating;
+        if (m_annotationManager && m_toolbar) {
+            m_annotationManager->setColor(m_toolbar->annotationColor());
+            m_annotationManager->setThickness(m_toolbar->annotationThickness());
+            m_annotationManager->startStroke(event->pos());
+        }
+        return;
+    }
+
     m_dragStart = event->pos();
 
     Handle h = handleAt(event->pos());
@@ -272,12 +295,28 @@ void OverlayWidget::mouseMoveEvent(QMouseEvent *event)
         update();
         break;
     }
+    case State::Annotating: {
+        if (m_annotationManager) {
+            m_annotationManager->continueStroke(pos);
+            update();
+        }
+        break;
+    }
     }
 }
 
 void OverlayWidget::mouseReleaseEvent(QMouseEvent *event)
 {
     if (event->button() != Qt::LeftButton) {
+        return;
+    }
+
+    if (m_state == State::Annotating) {
+        if (m_annotationManager) {
+            m_annotationManager->endStroke(event->pos());
+        }
+        m_state = State::Idle;
+        update();
         return;
     }
 
@@ -358,10 +397,42 @@ void OverlayWidget::onOcrRequested()
 
 void OverlayWidget::onAnnotateRequested()
 {
+    m_annotationMode = true;
+    if (m_toolbar && m_annotationManager) {
+        m_annotationManager->setTool(static_cast<AnnotationManager::Tool>(m_toolbar->annotationTool()));
+        m_annotationManager->setColor(m_toolbar->annotationColor());
+        m_annotationManager->setThickness(m_toolbar->annotationThickness());
+        m_toolbar->showAnnotationToolbar();
+    }
     emit annotateRequested();
 }
 
 void OverlayWidget::onScrollCaptureRequested()
 {
     emit scrollCaptureRequested();
+}
+
+void OverlayWidget::onAnnotationToolChanged(Toolbar::AnnotationTool tool)
+{
+    if (m_annotationManager) {
+        m_annotationManager->setTool(static_cast<AnnotationManager::Tool>(tool));
+    }
+}
+
+void OverlayWidget::onUndoRequested()
+{
+    if (m_annotationManager) {
+        m_annotationManager->undo();
+        update();
+    }
+}
+
+void OverlayWidget::onAnnotationDone()
+{
+    m_annotationMode = false;
+    if (m_toolbar) {
+        m_toolbar->showMainToolbar();
+    }
+    updateToolbarPosition();
+    update();
 }

@@ -4,8 +4,10 @@
 #include <QImage>
 #include <QRect>
 #include <QPoint>
+#include <memory>
+#include "Toolbar.h"
 
-class Toolbar;
+class AnnotationManager;
 
 class OverlayWidget : public QWidget
 {
@@ -21,6 +23,7 @@ public:
         Drawing,
         Moving,
         Resizing,
+        Annotating,
     };
 
     enum class Handle {
@@ -45,6 +48,9 @@ private slots:
     void onOcrRequested();
     void onAnnotateRequested();
     void onScrollCaptureRequested();
+    void onAnnotationToolChanged(Toolbar::AnnotationTool tool);
+    void onUndoRequested();
+    void onAnnotationDone();
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -67,6 +73,8 @@ private:
     QPoint m_selectionStartPos;
 
     Toolbar *m_toolbar = nullptr;
+    std::unique_ptr<AnnotationManager> m_annotationManager;
+    bool m_annotationMode = false;
 
     static constexpr int HandleSize = 8;
     static constexpr int MinSelectionSize = 5;
