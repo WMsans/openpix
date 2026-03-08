@@ -57,4 +57,5 @@ private:
     Toolbar *m_toolbar = nullptr;
 
     static constexpr int HandleSize = 8;
+    static constexpr int MinSelectionSize = 5;
 };

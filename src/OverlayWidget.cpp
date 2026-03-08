@@ -190,45 +190,49 @@ void OverlayWidget::mouseMoveEvent(QMouseEvent *event)
     }
     case State::Moving: {
         QPoint delta = pos - m_dragStart;
-        m_selection.moveTopLeft(m_selectionStartPos + delta);
+        QRect newSelection(m_selectionStartPos + delta, m_selection.size());
+        m_selection = newSelection.intersected(rect());
         updateToolbarPosition();
         update();
         break;
     }
     case State::Resizing: {
-        QRect r = m_selection;
         QPoint delta = pos - m_dragStart;
+        QRect r;
 
         switch (m_activeHandle) {
         case Handle::TopLeft:
-            r.setTopLeft(m_selectionStartPos + delta);
+            r = QRect(m_selectionStartPos + delta, m_selection.bottomRight());
             break;
         case Handle::Top:
-            r.setTop(m_selectionStartPos.y() + delta.y());
+            r = QRect(QPoint(m_selection.left(), m_selectionStartPos.y() + delta.y()), m_selection.bottomRight());
             break;
         case Handle::TopRight:
-            r.setTopRight(QPoint(m_selection.right() + delta.x(), m_selectionStartPos.y() + delta.y()));
+            r = QRect(QPoint(m_selection.right() + delta.x(), m_selectionStartPos.y() + delta.y()), m_selection.bottomLeft());
             break;
         case Handle::Left:
-            r.setLeft(m_selectionStartPos.x() + delta.x());
+            r = QRect(QPoint(m_selectionStartPos.x() + delta.x(), m_selection.top()), m_selection.bottomRight());
             break;
         case Handle::Right:
-            r.setRight(m_selection.right() + delta.x());
+            r = QRect(m_selection.topLeft(), QPoint(m_selection.right() + delta.x(), m_selection.bottom()));
             break;
         case Handle::BottomLeft:
-            r.setBottomLeft(QPoint(m_selectionStartPos.x() + delta.x(), m_selection.bottom() + delta.y()));
+            r = QRect(QPoint(m_selectionStartPos.x() + delta.x(), m_selection.bottom() + delta.y()), m_selection.topRight());
             break;
         case Handle::Bottom:
-            r.setBottom(m_selection.bottom() + delta.y());
+            r = QRect(m_selection.topLeft(), QPoint(m_selection.right(), m_selection.bottom() + delta.y()));
             break;
         case Handle::BottomRight:
-            r.setBottomRight(m_selection.bottomRight() + delta);
+            r = QRect(m_selection.topLeft(), m_selection.bottomRight() + delta);
             break;
         default:
+            r = m_selection;
             break;
         }
 
-        m_selection = r.normalized();
+        r = r.normalized();
+        r = r.intersected(rect());
+        m_selection = r;
         updateToolbarPosition();
         update();
         break;
@@ -243,7 +247,7 @@ void OverlayWidget::mouseReleaseEvent(QMouseEvent *event)
     }
 
     if (m_state == State::Drawing) {
-        if (m_selection.width() < 5 || m_selection.height() < 5) {
+        if (m_selection.width() < MinSelectionSize || m_selection.height() < MinSelectionSize) {
             m_selection = QRect();
         }
     }
@@ -266,7 +270,7 @@ void OverlayWidget::keyPressEvent(QKeyEvent *event)
         break;
     case Qt::Key_Return:
     case Qt::Key_Enter:
-        if (m_selection.isValid() && m_selection.width() >= 5 && m_selection.height() >= 5) {
+        if (m_selection.isValid() && m_selection.width() >= MinSelectionSize && m_selection.height() >= MinSelectionSize) {
             emit regionSelected(m_selection);
             close();
         }
