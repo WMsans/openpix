@@ -7,7 +7,7 @@ set(CMAKE_AUTOMOC ON)
 
 # --- Dependencies ---
 find_package(Qt6 REQUIRED COMPONENTS Widgets Gui DBus)
-find_package(OpenCV REQUIRED COMPONENTS core imgproc)
+find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(WAYLAND_CLIENT REQUIRED wayland-client)
 
@@ -16,11 +16,28 @@ pkg_check_modules(ONNXRUNTIME QUIET libonnxruntime)
 if(NOT ONNXRUNTIME_FOUND)
     find_library(ONNXRUNTIME_LIBRARIES NAMES onnxruntime)
     find_path(ONNXRUNTIME_INCLUDE_DIRS NAMES onnxruntime_cxx_api.h
-              PATH_SUFFIXES onnxruntime/core/session)
+              PATH_SUFFIXES onnxruntime/core/session onnxruntime)
     if(NOT ONNXRUNTIME_LIBRARIES)
         message(FATAL_ERROR "onnxruntime not found")
     endif()
 endif()
+
+# Create onnxruntime include wrapper for RapidOcrOnnx compatibility
+# RapidOcr expects: onnxruntime/core/session/onnxruntime_cxx_api.h
+# System provides: /usr/include/onnxruntime/onnxruntime_cxx_api.h
+execute_process(
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/onnxruntime/core/session
+)
+execute_process(
+    COMMAND ${CMAKE_COMMAND} -E create_symlink
+        ${ONNXRUNTIME_INCLUDE_DIRS}/onnxruntime_cxx_api.h
+        ${CMAKE_BINARY_DIR}/onnxruntime/core/session/onnxruntime_cxx_api.h
+)
+execute_process(
+    COMMAND ${CMAKE_COMMAND} -E create_symlink
+        ${ONNXRUNTIME_INCLUDE_DIRS}/onnxruntime_c_api.h
+        ${CMAKE_BINARY_DIR}/onnxruntime/core/session/onnxruntime_c_api.h
+)
 
 # --- Wayland protocol code generation ---
 find_program(WAYLAND_SCANNER wayland-scanner REQUIRED)
@@ -75,13 +92,13 @@ add_executable(openpix
     src/OverlayWidget.cpp
     src/Toolbar.cpp
     src/AnnotationManager.cpp
+    src/OcrEngine.cpp
     ${WLR_SCREENCOPY_C}
     ${WLR_SCREENCOPY_H}
+    ${RAPIDOCR_SOURCES}
     # TODO: Add as implemented
     # src/ScrollCapture.cpp
     # src/Stitcher.cpp
-    # src/OcrEngine.cpp
-    # ${RAPIDOCR_SOURCES}
 )
 
 target_include_directories(openpix PRIVATE

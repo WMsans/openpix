@@ -1,14 +1,23 @@
 #include <QApplication>
 #include <QMessageBox>
 #include <QDebug>
+#include <QClipboard>
+#include <QStandardPaths>
 #include "CaptureManager.h"
 #include "OverlayWidget.h"
+#include "OcrEngine.h"
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
     app.setApplicationName("openpix");
     app.setApplicationVersion("0.1.0");
+
+    OcrEngine ocrEngine;
+    QString modelsDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/../share/openpix/models";
+    if (!ocrEngine.init(modelsDir)) {
+        qWarning() << "OCR initialization failed:" << ocrEngine.lastError();
+    }
 
     CaptureManager captureManager;
 
@@ -19,6 +28,26 @@ int main(int argc, char *argv[])
             QObject::connect(overlay, &OverlayWidget::cancelled, &app, &QApplication::quit);
             QObject::connect(overlay, &OverlayWidget::regionSelected, [&](const QRect &region) {
                 qDebug() << "Region selected:" << region;
+                app.quit();
+            });
+            QObject::connect(overlay, &OverlayWidget::ocrRequested, [&]() {
+                QImage cropped = overlay->croppedImage();
+                if (cropped.isNull()) {
+                    QMessageBox::information(nullptr, "OpenPix", "No region selected");
+                    return;
+                }
+                if (!ocrEngine.isInitialized()) {
+                    QMessageBox::warning(nullptr, "OpenPix", "OCR not initialized: " + ocrEngine.lastError());
+                    return;
+                }
+                QString text = ocrEngine.recognize(cropped);
+                if (text.isEmpty()) {
+                    QMessageBox::information(nullptr, "OpenPix", "No text found");
+                } else {
+                    QApplication::clipboard()->setText(text);
+                    QMessageBox::information(nullptr, "OpenPix", "Text copied to clipboard");
+                }
+                overlay->close();
                 app.quit();
             });
         });
