@@ -19,7 +19,7 @@ OverlayWidget::OverlayWidget(const QImage &screenshot, QWidget *parent)
 
     auto screens = QGuiApplication::screens();
     QRect totalGeometry;
-    for (auto screen : screens) {
+    for (const auto &screen : screens) {
         totalGeometry = totalGeometry.united(screen->geometry());
     }
     setGeometry(totalGeometry);
