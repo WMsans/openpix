@@ -1,6 +1,7 @@
 #include "Toolbar.h"
 #include "OverlayWidget.h"
 #include <QHBoxLayout>
+#include <QVBoxLayout>
 #include <QPushButton>
 #include <QFileDialog>
 #include <QApplication>
@@ -8,6 +9,7 @@
 #include <QMimeData>
 #include <QDateTime>
 #include <QDir>
+#include <QDebug>
 
 const QColor Toolbar::Colors[6] = {Qt::red, Qt::green, Qt::blue, Qt::yellow, Qt::white, Qt::black};
 constexpr int Toolbar::Thicknesses[];
@@ -20,8 +22,8 @@ Toolbar::Toolbar(OverlayWidget *overlay, QWidget *parent)
     setWindowFlags(Qt::FramelessWindowHint | Qt::Tool);
     setAttribute(Qt::WA_ShowWithoutActivating);
 
-    setupMainToolbar();
     setupAnnotationToolbar();
+    setupMainToolbar();
     applyStyles();
 
     setMode(Mode::Main);
@@ -66,25 +68,26 @@ void Toolbar::setupAnnotationToolbar()
     m_annotationLayout->setContentsMargins(4, 4, 4, 4);
     m_annotationLayout->setSpacing(2);
 
-    auto *freehandBtn = new QPushButton("Freehand", m_annotationWidget);
-    auto *rectBtn = new QPushButton("Rectangle", m_annotationWidget);
-    auto *colorBtn = new QPushButton("Color", m_annotationWidget);
-    auto *thicknessBtn = new QPushButton("2px", m_annotationWidget);
-    auto *undoBtn = new QPushButton("Undo", m_annotationWidget);
-    auto *doneBtn = new QPushButton("Done", m_annotationWidget);
+    m_freehandBtn = new QPushButton("Freehand", m_annotationWidget);
+    m_rectBtn = new QPushButton("Rectangle", m_annotationWidget);
+    m_colorBtn = new QPushButton("Color", m_annotationWidget);
+    m_thicknessBtn = new QPushButton("2px", m_annotationWidget);
+    m_undoBtn = new QPushButton("Undo", m_annotationWidget);
+    m_doneBtn = new QPushButton("Done", m_annotationWidget);
 
-    colorBtn->setObjectName("colorBtn");
-    thicknessBtn->setObjectName("thicknessBtn");
+    connect(m_freehandBtn, &QPushButton::clicked, this, &Toolbar::onFreehandClicked);
+    connect(m_rectBtn, &QPushButton::clicked, this, &Toolbar::onRectClicked);
+    connect(m_colorBtn, &QPushButton::clicked, this, &Toolbar::cycleColor);
+    connect(m_thicknessBtn, &QPushButton::clicked, this, &Toolbar::cycleThickness);
+    connect(m_undoBtn, &QPushButton::clicked, this, &Toolbar::onUndoClicked);
+    connect(m_doneBtn, &QPushButton::clicked, this, &Toolbar::onDoneClicked);
 
-    connect(colorBtn, &QPushButton::clicked, this, &Toolbar::cycleColor);
-    connect(thicknessBtn, &QPushButton::clicked, this, &Toolbar::cycleThickness);
-
-    m_annotationLayout->addWidget(freehandBtn);
-    m_annotationLayout->addWidget(rectBtn);
-    m_annotationLayout->addWidget(colorBtn);
-    m_annotationLayout->addWidget(thicknessBtn);
-    m_annotationLayout->addWidget(undoBtn);
-    m_annotationLayout->addWidget(doneBtn);
+    m_annotationLayout->addWidget(m_freehandBtn);
+    m_annotationLayout->addWidget(m_rectBtn);
+    m_annotationLayout->addWidget(m_colorBtn);
+    m_annotationLayout->addWidget(m_thicknessBtn);
+    m_annotationLayout->addWidget(m_undoBtn);
+    m_annotationLayout->addWidget(m_doneBtn);
 
     updateColorButton();
 }
@@ -153,10 +156,9 @@ void Toolbar::cycleThickness()
 
 void Toolbar::updateColorButton()
 {
-    auto *colorBtn = m_annotationWidget->findChild<QPushButton*>("colorBtn");
-    if (colorBtn) {
+    if (m_colorBtn) {
         QString colorName = m_annotationColor.name();
-        colorBtn->setStyleSheet(QString("background-color: %1; color: %2;")
+        m_colorBtn->setStyleSheet(QString("background-color: %1; color: %2;")
             .arg(colorName)
             .arg(m_annotationColor.lightness() > 128 ? "#000000" : "#ffffff"));
     }
@@ -164,10 +166,31 @@ void Toolbar::updateColorButton()
 
 void Toolbar::updateThicknessButton()
 {
-    auto *thicknessBtn = m_annotationWidget->findChild<QPushButton*>("thicknessBtn");
-    if (thicknessBtn) {
-        thicknessBtn->setText(QString("%1px").arg(m_annotationThickness));
+    if (m_thicknessBtn) {
+        m_thicknessBtn->setText(QString("%1px").arg(m_annotationThickness));
     }
+}
+
+void Toolbar::onFreehandClicked()
+{
+    m_annotationTool = AnnotationTool::Freehand;
+    emit annotationToolChanged(m_annotationTool);
+}
+
+void Toolbar::onRectClicked()
+{
+    m_annotationTool = AnnotationTool::Rectangle;
+    emit annotationToolChanged(m_annotationTool);
+}
+
+void Toolbar::onUndoClicked()
+{
+    emit undoRequested();
+}
+
+void Toolbar::onDoneClicked()
+{
+    emit annotationDone();
 }
 
 void Toolbar::onSaveClicked()
@@ -191,8 +214,11 @@ void Toolbar::onSaveClicked()
         if (!fileName.endsWith(".png", Qt::CaseInsensitive)) {
             fileName += ".png";
         }
-        image.save(fileName, "PNG");
-        qApp->quit();
+        if (!image.save(fileName, "PNG")) {
+            qWarning() << "Failed to save screenshot to" << fileName;
+            return;
+        }
+        emit quitRequested();
     }
 }
 
@@ -207,5 +233,5 @@ void Toolbar::onCopyClicked()
     mimeData->setImageData(image);
 
     QApplication::clipboard()->setMimeData(mimeData);
-    qApp->quit();
+    emit quitRequested();
 }

@@ -16,6 +16,10 @@ public:
         Main,
         Annotation
     };
+    enum class AnnotationTool {
+        Freehand,
+        Rectangle
+    };
 
     explicit Toolbar(OverlayWidget *overlay, QWidget *parent = nullptr);
 
@@ -27,6 +31,7 @@ public:
 
     QColor annotationColor() const { return m_annotationColor; }
     int annotationThickness() const { return m_annotationThickness; }
+    AnnotationTool annotationTool() const { return m_annotationTool; }
 
 signals:
     void saveRequested();
@@ -34,6 +39,10 @@ signals:
     void ocrRequested();
     void annotateRequested();
     void scrollCaptureRequested();
+    void annotationToolChanged(AnnotationTool tool);
+    void undoRequested();
+    void annotationDone();
+    void quitRequested();
 
 private:
     void setupMainToolbar();
@@ -41,6 +50,10 @@ private:
     void applyStyles();
     void cycleColor();
     void cycleThickness();
+    void onFreehandClicked();
+    void onRectClicked();
+    void onUndoClicked();
+    void onDoneClicked();
     void onSaveClicked();
     void onCopyClicked();
     void updateColorButton();
@@ -52,7 +65,15 @@ private:
     QWidget *m_mainWidget = nullptr;
     QWidget *m_annotationWidget = nullptr;
 
+    QPushButton *m_freehandBtn = nullptr;
+    QPushButton *m_rectBtn = nullptr;
+    QPushButton *m_colorBtn = nullptr;
+    QPushButton *m_thicknessBtn = nullptr;
+    QPushButton *m_undoBtn = nullptr;
+    QPushButton *m_doneBtn = nullptr;
+
     Mode m_mode = Mode::Main;
+    AnnotationTool m_annotationTool = AnnotationTool::Freehand;
 
     QColor m_annotationColor;
     int m_annotationThickness = 2;

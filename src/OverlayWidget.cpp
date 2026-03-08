@@ -1,4 +1,5 @@
 #include "OverlayWidget.h"
+#include "Toolbar.h"
 #include <QPainter>
 #include <QPainterPath>
 #include <QMouseEvent>
@@ -23,6 +24,14 @@ OverlayWidget::OverlayWidget(const QImage &screenshot, QWidget *parent)
         totalGeometry = totalGeometry.united(screen->geometry());
     }
     setGeometry(totalGeometry);
+
+    m_toolbar = new Toolbar(this, this);
+    connect(m_toolbar, &Toolbar::saveRequested, this, &OverlayWidget::onSaveRequested);
+    connect(m_toolbar, &Toolbar::copyRequested, this, &OverlayWidget::onCopyRequested);
+    connect(m_toolbar, &Toolbar::ocrRequested, this, &OverlayWidget::onOcrRequested);
+    connect(m_toolbar, &Toolbar::annotateRequested, this, &OverlayWidget::onAnnotateRequested);
+    connect(m_toolbar, &Toolbar::scrollCaptureRequested, this, &OverlayWidget::onScrollCaptureRequested);
+    m_toolbar->hide();
 
     show();
     setFocus();
@@ -140,7 +149,33 @@ QRect OverlayWidget::handleRect(Handle handle) const
 
 void OverlayWidget::updateToolbarPosition()
 {
-    // TODO: implemented in Task 5 when Toolbar is added
+    if (!m_toolbar) {
+        return;
+    }
+
+    if (!m_selection.isValid() || m_selection.width() < MinSelectionSize || m_selection.height() < MinSelectionSize) {
+        m_toolbar->hide();
+        return;
+    }
+
+    QSize toolbarSize = m_toolbar->sizeHint();
+    int margin = 4;
+
+    int x = m_selection.right() - toolbarSize.width() + 1;
+    int y = m_selection.bottom() + margin + 1;
+
+    QRect screenRect = rect();
+    int bottomSpace = screenRect.bottom() - m_selection.bottom() - margin;
+
+    if (bottomSpace < toolbarSize.height()) {
+        y = m_selection.top() - toolbarSize.height() - margin;
+    }
+
+    x = qMax(screenRect.left(), qMin(x, screenRect.right() - toolbarSize.width()));
+    y = qMax(screenRect.top(), qMin(y, screenRect.bottom() - toolbarSize.height()));
+
+    m_toolbar->move(x, y);
+    m_toolbar->show();
 }
 
 void OverlayWidget::mousePressEvent(QMouseEvent *event)
@@ -257,8 +292,6 @@ void OverlayWidget::mouseReleaseEvent(QMouseEvent *event)
 
     updateToolbarPosition();
     update();
-
-    // Toolbar will be shown in Task 5
 }
 
 void OverlayWidget::keyPressEvent(QKeyEvent *event)
@@ -306,4 +339,29 @@ void OverlayWidget::keyPressEvent(QKeyEvent *event)
     default:
         QWidget::keyPressEvent(event);
     }
+}
+
+void OverlayWidget::onSaveRequested()
+{
+    emit saveRequested();
+}
+
+void OverlayWidget::onCopyRequested()
+{
+    emit copyRequested();
+}
+
+void OverlayWidget::onOcrRequested()
+{
+    emit ocrRequested();
+}
+
+void OverlayWidget::onAnnotateRequested()
+{
+    emit annotateRequested();
+}
+
+void OverlayWidget::onScrollCaptureRequested()
+{
+    emit scrollCaptureRequested();
 }

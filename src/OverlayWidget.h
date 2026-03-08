@@ -33,6 +33,18 @@ public:
 signals:
     void regionSelected(const QRect &region);
     void cancelled();
+    void saveRequested();
+    void copyRequested();
+    void ocrRequested();
+    void annotateRequested();
+    void scrollCaptureRequested();
+
+private slots:
+    void onSaveRequested();
+    void onCopyRequested();
+    void onOcrRequested();
+    void onAnnotateRequested();
+    void onScrollCaptureRequested();
 
 protected:
     void paintEvent(QPaintEvent *event) override;
