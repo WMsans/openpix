@@ -72,10 +72,10 @@ set(RAPIDOCR_SOURCES
 add_executable(openpix
     src/main.cpp
     src/CaptureManager.cpp
+    src/OverlayWidget.cpp
     ${WLR_SCREENCOPY_C}
     ${WLR_SCREENCOPY_H}
     # TODO: Add as implemented
-    # src/OverlayWidget.cpp
     # src/Toolbar.cpp
     # src/AnnotationManager.cpp
     # src/ScrollCapture.cpp

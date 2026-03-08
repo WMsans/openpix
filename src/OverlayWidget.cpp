@@ -1,0 +1,305 @@
+#include "OverlayWidget.h"
+#include <QPainter>
+#include <QPainterPath>
+#include <QMouseEvent>
+#include <QKeyEvent>
+#include <QApplication>
+#include <QScreen>
+#include <QtMath>
+
+OverlayWidget::OverlayWidget(const QImage &screenshot, QWidget *parent)
+    : QWidget(parent)
+    , m_screenshot(screenshot)
+{
+    setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::Tool);
+    setAttribute(Qt::WA_TranslucentBackground, false);
+    setAttribute(Qt::WA_DeleteOnClose);
+    setMouseTracking(true);
+    setFocusPolicy(Qt::StrongFocus);
+
+    auto screens = QGuiApplication::screens();
+    QRect totalGeometry;
+    for (auto screen : screens) {
+        totalGeometry = totalGeometry.united(screen->geometry());
+    }
+    setGeometry(totalGeometry);
+
+    show();
+    setFocus();
+}
+
+QImage OverlayWidget::croppedImage() const
+{
+    if (m_selection.isValid()) {
+        return m_screenshot.copy(m_selection);
+    }
+    return QImage();
+}
+
+void OverlayWidget::paintEvent(QPaintEvent *event)
+{
+    Q_UNUSED(event);
+
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    painter.drawImage(rect(), m_screenshot);
+
+    if (m_selection.isNull() || !m_selection.isValid()) {
+        painter.fillRect(rect(), QColor(0, 0, 0, 128));
+        return;
+    }
+
+    QPainterPath path;
+    path.addRect(rect());
+    path.addRect(m_selection);
+    painter.setClipPath(path);
+    painter.fillRect(rect(), QColor(0, 0, 0, 128));
+    painter.setClipping(false);
+
+    QPen borderPen(QColor(255, 255, 255), 1, Qt::DashLine);
+    painter.setPen(borderPen);
+    painter.setBrush(Qt::NoBrush);
+    painter.drawRect(m_selection);
+
+    for (int i = 1; i <= 8; ++i) {
+        Handle h = static_cast<Handle>(i);
+        QRect hr = handleRect(h);
+        painter.setBrush(QColor(255, 255, 255));
+        painter.setPen(QPen(QColor(0, 0, 0), 1));
+        painter.drawRect(hr);
+    }
+}
+
+OverlayWidget::Handle OverlayWidget::handleAt(const QPoint &pos) const
+{
+    for (int i = 1; i <= 8; ++i) {
+        Handle h = static_cast<Handle>(i);
+        if (handleRect(h).contains(pos)) {
+            return h;
+        }
+    }
+    return Handle::None;
+}
+
+Qt::CursorShape OverlayWidget::cursorForHandle(Handle handle) const
+{
+    switch (handle) {
+    case Handle::TopLeft:
+    case Handle::BottomRight:
+        return Qt::SizeFDiagCursor;
+    case Handle::TopRight:
+    case Handle::BottomLeft:
+        return Qt::SizeBDiagCursor;
+    case Handle::Top:
+    case Handle::Bottom:
+        return Qt::SizeVerCursor;
+    case Handle::Left:
+    case Handle::Right:
+        return Qt::SizeHorCursor;
+    default:
+        return Qt::ArrowCursor;
+    }
+}
+
+QRect OverlayWidget::handleRect(Handle handle) const
+{
+    if (handle == Handle::None || m_selection.isNull()) {
+        return QRect();
+    }
+
+    int hs = HandleSize;
+    int x = m_selection.x();
+    int y = m_selection.y();
+    int w = m_selection.width();
+    int h = m_selection.height();
+    int cx = x + w / 2;
+    int cy = y + h / 2;
+
+    switch (handle) {
+    case Handle::TopLeft:
+        return QRect(x - hs, y - hs, hs * 2, hs * 2);
+    case Handle::Top:
+        return QRect(cx - hs, y - hs, hs * 2, hs * 2);
+    case Handle::TopRight:
+        return QRect(x + w - hs, y - hs, hs * 2, hs * 2);
+    case Handle::Left:
+        return QRect(x - hs, cy - hs, hs * 2, hs * 2);
+    case Handle::Right:
+        return QRect(x + w - hs, cy - hs, hs * 2, hs * 2);
+    case Handle::BottomLeft:
+        return QRect(x - hs, y + h - hs, hs * 2, hs * 2);
+    case Handle::Bottom:
+        return QRect(cx - hs, y + h - hs, hs * 2, hs * 2);
+    case Handle::BottomRight:
+        return QRect(x + w - hs, y + h - hs, hs * 2, hs * 2);
+    default:
+        return QRect();
+    }
+}
+
+void OverlayWidget::updateToolbarPosition()
+{
+    // TODO: implemented in Task 5 when Toolbar is added
+}
+
+void OverlayWidget::mousePressEvent(QMouseEvent *event)
+{
+    if (event->button() != Qt::LeftButton) {
+        return;
+    }
+
+    m_dragStart = event->pos();
+
+    Handle h = handleAt(event->pos());
+    if (h != Handle::None) {
+        m_state = State::Resizing;
+        m_activeHandle = h;
+        m_selectionStartPos = m_selection.topLeft();
+        m_dragStart = event->pos();
+        return;
+    }
+
+    if (m_selection.isValid() && m_selection.contains(event->pos())) {
+        m_state = State::Moving;
+        m_dragStart = event->pos();
+        m_selectionStartPos = m_selection.topLeft();
+        return;
+    }
+
+    m_state = State::Drawing;
+    m_selectionStartPos = event->pos();
+    m_selection = QRect();
+}
+
+void OverlayWidget::mouseMoveEvent(QMouseEvent *event)
+{
+    QPoint pos = event->pos();
+
+    switch (m_state) {
+    case State::Idle: {
+        Handle h = handleAt(pos);
+        setCursor(cursorForHandle(h));
+        break;
+    }
+    case State::Drawing: {
+        QRect newSelection(m_selectionStartPos, pos);
+        m_selection = newSelection.normalized();
+        update();
+        break;
+    }
+    case State::Moving: {
+        QPoint delta = pos - m_dragStart;
+        m_selection.moveTopLeft(m_selectionStartPos + delta);
+        updateToolbarPosition();
+        update();
+        break;
+    }
+    case State::Resizing: {
+        QRect r = m_selection;
+        QPoint delta = pos - m_dragStart;
+
+        switch (m_activeHandle) {
+        case Handle::TopLeft:
+            r.setTopLeft(m_selectionStartPos + delta);
+            break;
+        case Handle::Top:
+            r.setTop(m_selectionStartPos.y() + delta.y());
+            break;
+        case Handle::TopRight:
+            r.setTopRight(QPoint(m_selection.right() + delta.x(), m_selectionStartPos.y() + delta.y()));
+            break;
+        case Handle::Left:
+            r.setLeft(m_selectionStartPos.x() + delta.x());
+            break;
+        case Handle::Right:
+            r.setRight(m_selection.right() + delta.x());
+            break;
+        case Handle::BottomLeft:
+            r.setBottomLeft(QPoint(m_selectionStartPos.x() + delta.x(), m_selection.bottom() + delta.y()));
+            break;
+        case Handle::Bottom:
+            r.setBottom(m_selection.bottom() + delta.y());
+            break;
+        case Handle::BottomRight:
+            r.setBottomRight(m_selection.bottomRight() + delta);
+            break;
+        default:
+            break;
+        }
+
+        m_selection = r.normalized();
+        updateToolbarPosition();
+        update();
+        break;
+    }
+    }
+}
+
+void OverlayWidget::mouseReleaseEvent(QMouseEvent *event)
+{
+    if (event->button() != Qt::LeftButton) {
+        return;
+    }
+
+    if (m_state == State::Drawing) {
+        if (m_selection.width() < 5 || m_selection.height() < 5) {
+            m_selection = QRect();
+        }
+    }
+
+    m_state = State::Idle;
+    m_activeHandle = Handle::None;
+
+    updateToolbarPosition();
+    update();
+
+    // Toolbar will be shown in Task 5
+}
+
+void OverlayWidget::keyPressEvent(QKeyEvent *event)
+{
+    switch (event->key()) {
+    case Qt::Key_Escape:
+        emit cancelled();
+        close();
+        break;
+    case Qt::Key_Return:
+    case Qt::Key_Enter:
+        if (m_selection.isValid() && m_selection.width() >= 5 && m_selection.height() >= 5) {
+            emit regionSelected(m_selection);
+            close();
+        }
+        break;
+    case Qt::Key_Left:
+        if (m_selection.isValid()) {
+            m_selection.translate(-1, 0);
+            updateToolbarPosition();
+            update();
+        }
+        break;
+    case Qt::Key_Right:
+        if (m_selection.isValid()) {
+            m_selection.translate(1, 0);
+            updateToolbarPosition();
+            update();
+        }
+        break;
+    case Qt::Key_Up:
+        if (m_selection.isValid()) {
+            m_selection.translate(0, -1);
+            updateToolbarPosition();
+            update();
+        }
+        break;
+    case Qt::Key_Down:
+        if (m_selection.isValid()) {
+            m_selection.translate(0, 1);
+            updateToolbarPosition();
+            update();
+        }
+        break;
+    default:
+        QWidget::keyPressEvent(event);
+    }
+}
