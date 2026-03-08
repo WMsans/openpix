@@ -11,7 +11,7 @@ OverlayWidget::OverlayWidget(const QImage &screenshot, QWidget *parent)
     : QWidget(parent)
     , m_screenshot(screenshot)
 {
-    setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::Tool);
+    setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::BypassWindowManagerHint);
     setAttribute(Qt::WA_TranslucentBackground, false);
     setAttribute(Qt::WA_DeleteOnClose);
     setMouseTracking(true);
@@ -273,28 +273,28 @@ void OverlayWidget::keyPressEvent(QKeyEvent *event)
         break;
     case Qt::Key_Left:
         if (m_selection.isValid()) {
-            m_selection.translate(-1, 0);
+            m_selection.translate(event->modifiers() & Qt::ShiftModifier ? -10 : -1, 0);
             updateToolbarPosition();
             update();
         }
         break;
     case Qt::Key_Right:
         if (m_selection.isValid()) {
-            m_selection.translate(1, 0);
+            m_selection.translate(event->modifiers() & Qt::ShiftModifier ? 10 : 1, 0);
             updateToolbarPosition();
             update();
         }
         break;
     case Qt::Key_Up:
         if (m_selection.isValid()) {
-            m_selection.translate(0, -1);
+            m_selection.translate(0, event->modifiers() & Qt::ShiftModifier ? -10 : -1);
             updateToolbarPosition();
             update();
         }
         break;
     case Qt::Key_Down:
         if (m_selection.isValid()) {
-            m_selection.translate(0, 1);
+            m_selection.translate(0, event->modifiers() & Qt::ShiftModifier ? 10 : 1);
             updateToolbarPosition();
             update();
         }
