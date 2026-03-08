@@ -73,10 +73,10 @@ add_executable(openpix
     src/main.cpp
     src/CaptureManager.cpp
     src/OverlayWidget.cpp
+    src/Toolbar.cpp
     ${WLR_SCREENCOPY_C}
     ${WLR_SCREENCOPY_H}
     # TODO: Add as implemented
-    # src/Toolbar.cpp
     # src/AnnotationManager.cpp
     # src/ScrollCapture.cpp
     # src/Stitcher.cpp
