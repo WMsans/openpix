@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 
 # --- Dependencies ---
-find_package(Qt6 REQUIRED COMPONENTS Widgets Gui DBus)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Gui DBus Concurrent)
 find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(WAYLAND_CLIENT REQUIRED wayland-client)
@@ -113,6 +113,7 @@ target_link_libraries(openpix PRIVATE
     Qt6::Widgets
     Qt6::Gui
     Qt6::DBus
+    Qt6::Concurrent
     ${OpenCV_LIBS}
     ${WAYLAND_CLIENT_LIBRARIES}
     ${ONNXRUNTIME_LIBRARIES}
