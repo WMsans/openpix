@@ -15,6 +15,7 @@
 #include <QCoreApplication>
 #include <QStandardPaths>
 #include <QtConcurrent>
+#include <QProcess>
 #include <iostream>
 
 const QColor Toolbar::Colors[6] = {Qt::red, Qt::green, Qt::blue, Qt::yellow, Qt::white, Qt::black};
@@ -311,8 +312,21 @@ void Toolbar::onOcr()
                 return;
             }
 
-            QApplication::clipboard()->setText(text);
-            qApp->quit();
+            std::cout << "=== COPY DEBUG ===" << std::endl;
+            std::cout << "Text to copy: [" << text.toStdString() << "]" << std::endl;
+            std::cout << "Text length: " << text.length() << std::endl;
+            
+            QProcess wlCopy;
+            wlCopy.start("wl-copy", QStringList() << text);
+            wlCopy.waitForFinished(1000);
+            
+            std::cout << "wl-copy exit code: " << wlCopy.exitCode() << std::endl;
+            std::cout << "wl-copy exit status: " << wlCopy.exitStatus() << std::endl;
+            std::cout << "wl-copy stderr: [" << wlCopy.readAllStandardError().toStdString() << "]" << std::endl;
+            std::cout << "==================" << std::endl;
+            
+            QMessageBox::information(m_overlay, "OpenPix", "Text copied to clipboard");
+            emit quitRequested();
         }, Qt::QueuedConnection);
     });
 }
