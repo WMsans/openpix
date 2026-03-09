@@ -118,6 +118,14 @@ target_link_libraries(openpix PRIVATE
     ${ONNXRUNTIME_LIBRARIES}
 )
 
+# --- Tests ---
+enable_testing()
+find_package(Qt6 REQUIRED COMPONENTS Test)
+add_executable(test_stitcher tests/test_stitcher.cpp src/Stitcher.cpp)
+target_include_directories(test_stitcher PRIVATE ${CMAKE_BINARY_DIR} src/)
+target_link_libraries(test_stitcher Qt6::Test Qt6::Gui ${OpenCV_LIBS})
+add_test(NAME test_stitcher COMMAND test_stitcher)
+
 # --- Install ---
 install(TARGETS openpix RUNTIME DESTINATION bin)
 install(DIRECTORY resources/models DESTINATION share/openpix)
