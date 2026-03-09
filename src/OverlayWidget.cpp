@@ -490,9 +490,10 @@ void OverlayWidget::startScrollCapture()
 
     connect(scrollCapture, &ScrollCapture::finished, this, [this](const QImage &stitchedImage) {
         m_screenshot = stitchedImage;
-        m_selection = QRect();
+        m_selection = QRect(0, 0, width(), height());
         show();
         setFocus();
+        updateToolbarPosition();
         update();
     });
 

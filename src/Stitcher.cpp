@@ -18,25 +18,23 @@ int Stitcher::findOverlap(const QImage &imgA, const QImage &imgB, double thresho
 {
     cv::Mat matA = qimageToCvMat(imgA);
     cv::Mat matB = qimageToCvMat(imgB);
-    
+
     int stripHeight = matA.rows / 3;
     if (stripHeight < 10) stripHeight = 10;
     cv::Mat templ = matA(cv::Rect(0, matA.rows - stripHeight, matA.cols, stripHeight));
-    
-    int searchHeight = matB.rows / 2;
-    if (searchHeight < stripHeight) searchHeight = matB.rows;
-    cv::Mat searchRegion = matB(cv::Rect(0, 0, matB.cols, searchHeight));
-    
+
+    cv::Mat searchRegion = matB;
+
     cv::Mat result;
     cv::matchTemplate(searchRegion, templ, result, cv::TM_CCOEFF_NORMED);
-    
+
     double maxVal;
     cv::Point maxLoc;
     cv::minMaxLoc(result, nullptr, &maxVal, nullptr, &maxLoc);
-    
+
     if (maxVal < threshold)
         return -1;
-    
+
     return maxLoc.y + stripHeight;
 }
 
@@ -77,14 +75,21 @@ QImage Stitcher::stitch(const QVector<QImage> &frames, QString *errorOut)
     QVector<Segment> segments;
     segments.append({&frames[0], 0});
     
+    static const int MIN_NEW_CONTENT = 4;
+
     bool anyFailed = false;
+    int lastKept = 0;
     for (int i = 1; i < frames.size(); ++i) {
-        int overlap = findOverlap(frames[i - 1], frames[i]);
+        int overlap = findOverlap(frames[lastKept], frames[i]);
         if (overlap < 0) {
             anyFailed = true;
             segments.append({&frames[i], 0});
+            lastKept = i;
+        } else if (frames[i].height() - overlap < MIN_NEW_CONTENT) {
+            continue;
         } else {
             segments.append({&frames[i], overlap});
+            lastKept = i;
         }
     }
     

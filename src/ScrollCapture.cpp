@@ -84,8 +84,10 @@ ScrollCapture::ScrollCapture(CaptureManager *captureManager, const QRect &captur
 
     show();
 
-    captureFrame();
-    m_captureTimer->start();
+    QTimer::singleShot(600, this, [this]() {
+        captureFrame();
+        m_captureTimer->start();
+    });
 }
 
 ScrollCapture::~ScrollCapture()
