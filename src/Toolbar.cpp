@@ -13,6 +13,7 @@
 #include <QDebug>
 #include <QMessageBox>
 #include <QCoreApplication>
+#include <QStandardPaths>
 #include <QtConcurrent>
 
 const QColor Toolbar::Colors[6] = {Qt::red, Qt::green, Qt::blue, Qt::yellow, Qt::white, Qt::black};
@@ -251,17 +252,20 @@ void Toolbar::onOcr()
     QtConcurrent::run([this, img]() {
         static OcrEngine ocrEngine;
         if (!ocrEngine.isInitialized()) {
-            QString modelsDir = QCoreApplication::applicationDirPath() + "/../share/openpix/models";
+            QString modelsDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/models";
             if (!ocrEngine.init(modelsDir)) {
-                modelsDir = "/usr/share/openpix/models";
+                modelsDir = QCoreApplication::applicationDirPath() + "/../share/openpix/models";
                 if (!ocrEngine.init(modelsDir)) {
-                    QMetaObject::invokeMethod(this, [this]() {
-                        QMessageBox::warning(m_overlay, "OCR Error",
-                            "OCR models not found. Place models in share/openpix/models/");
-                        setEnabled(true);
-                        unsetCursor();
-                    }, Qt::QueuedConnection);
-                    return;
+                    modelsDir = "/usr/share/openpix/models";
+                    if (!ocrEngine.init(modelsDir)) {
+                        QMetaObject::invokeMethod(this, [this]() {
+                            QMessageBox::warning(m_overlay, "OCR Error",
+                                "OCR models not found. Place models in ~/.local/share/openpix/models/");
+                            setEnabled(true);
+                            unsetCursor();
+                        }, Qt::QueuedConnection);
+                        return;
+                    }
                 }
             }
         }

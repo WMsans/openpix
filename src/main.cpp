@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
     app.setApplicationVersion("0.1.0");
 
     OcrEngine *ocrEngine = new OcrEngine(&app);
-    QString modelsDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/../share/openpix/models";
+    QString modelsDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/models";
     if (!ocrEngine->init(modelsDir)) {
         qWarning() << "OCR initialization failed:" << ocrEngine->lastError();
     }
@@ -43,10 +43,10 @@ int main(int argc, char *argv[])
                 QString text = ocrEngine->recognize(cropped);
                 if (text.isEmpty()) {
                     QMessageBox::information(nullptr, "OpenPix", "No text found");
-                } else {
-                    QApplication::clipboard()->setText(text);
-                    QMessageBox::information(nullptr, "OpenPix", "Text copied to clipboard");
+                    return;
                 }
+                QApplication::clipboard()->setText(text);
+                QMessageBox::information(nullptr, "OpenPix", "Text copied to clipboard");
                 overlay->close();
                 app.quit();
             });
