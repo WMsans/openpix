@@ -49,6 +49,22 @@ QImage Stitcher::stitch(const QVector<QImage> &frames, QString *errorOut)
     
     int width = frames.first().width();
     
+    for (int i = 1; i < frames.size(); ++i) {
+        if (frames[i].width() != width) {
+            if (errorOut) {
+                *errorOut = QString("Frame %1 has width %2, expected %3")
+                    .arg(i).arg(frames[i].width()).arg(width);
+            }
+            return QImage();
+        }
+        if (frames[i].isNull()) {
+            if (errorOut) {
+                *errorOut = QString("Frame %1 is null or invalid").arg(i);
+            }
+            return QImage();
+        }
+    }
+    
     struct Segment {
         const QImage *image;
         int startRow;
