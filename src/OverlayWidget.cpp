@@ -2,6 +2,7 @@
 #include "Toolbar.h"
 #include "AnnotationManager.h"
 #include "ScrollCapture.h"
+#include "LongImageWidget.h"
 #include "CaptureManager.h"
 #include <QPainter>
 #include <QPainterPath>
@@ -489,12 +490,11 @@ void OverlayWidget::startScrollCapture()
     ScrollCapture *scrollCapture = new ScrollCapture(m_captureManager, scaledRegion);
 
     connect(scrollCapture, &ScrollCapture::finished, this, [this](const QImage &stitchedImage) {
-        m_screenshot = stitchedImage;
-        m_selection = QRect(0, 0, width(), height());
-        show();
-        setFocus();
-        updateToolbarPosition();
-        update();
+        auto *viewer = new LongImageWidget(stitchedImage);
+        connect(viewer, &QWidget::destroyed, this, []() {
+            qApp->quit();
+        });
+        close();
     });
 
     connect(scrollCapture, &ScrollCapture::cancelled, this, [this]() {
