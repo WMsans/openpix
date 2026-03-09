@@ -132,3 +132,85 @@ void LongImageWidget::paintEvent(QPaintEvent *event)
         painter.restore();
     }
 }
+
+void LongImageWidget::wheelEvent(QWheelEvent *event)
+{
+    if (event->modifiers() & Qt::ControlModifier) {
+        double factor = event->angleDelta().y() > 0 ? 1.1 : 0.9;
+        updateZoomAtPoint(m_zoom * factor, event->position());
+    } else {
+        double scrollAmount = -event->angleDelta().y() / m_zoom;
+        m_offset.setY(m_offset.y() + scrollAmount);
+        clampOffset();
+        update();
+    }
+}
+
+void LongImageWidget::mousePressEvent(QMouseEvent *event)
+{
+    if (event->button() != Qt::LeftButton) return;
+
+    if (m_annotating) {
+        if (m_annotationManager) {
+            m_annotationManager->setColor(m_annotationColor);
+            m_annotationManager->setThickness(m_annotationThickness);
+            QPointF imagePos = widgetToImage(event->position());
+            m_annotationManager->startStroke(imagePos.toPoint());
+        }
+        return;
+    }
+
+    m_dragging = true;
+    m_dragStart = event->pos();
+    m_offsetAtDragStart = m_offset;
+    setCursor(Qt::ClosedHandCursor);
+}
+
+void LongImageWidget::mouseMoveEvent(QMouseEvent *event)
+{
+    if (m_annotating && m_annotationManager) {
+        QPointF imagePos = widgetToImage(event->position());
+        m_annotationManager->continueStroke(imagePos.toPoint());
+        update();
+        return;
+    }
+
+    if (m_dragging) {
+        QPoint delta = event->pos() - m_dragStart;
+        m_offset.setX(m_offsetAtDragStart.x() - delta.x() / m_zoom);
+        m_offset.setY(m_offsetAtDragStart.y() - delta.y() / m_zoom);
+        clampOffset();
+        update();
+    } else if (!m_annotating) {
+        setCursor(Qt::OpenHandCursor);
+    }
+}
+
+void LongImageWidget::mouseReleaseEvent(QMouseEvent *event)
+{
+    if (event->button() != Qt::LeftButton) return;
+
+    if (m_annotating && m_annotationManager) {
+        QPointF imagePos = widgetToImage(event->position());
+        m_annotationManager->endStroke(imagePos.toPoint());
+        update();
+        return;
+    }
+
+    m_dragging = false;
+    setCursor(m_annotating ? Qt::CrossCursor : Qt::OpenHandCursor);
+}
+
+void LongImageWidget::keyPressEvent(QKeyEvent *event)
+{
+    if (event->key() == Qt::Key_Escape) {
+        if (m_annotating) {
+            onAnnotationDone();
+        } else {
+            close();
+            qApp->quit();
+        }
+    } else {
+        QWidget::keyPressEvent(event);
+    }
+}
