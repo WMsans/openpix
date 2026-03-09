@@ -15,6 +15,7 @@
 #include <QCoreApplication>
 #include <QStandardPaths>
 #include <QtConcurrent>
+#include <iostream>
 
 const QColor Toolbar::Colors[6] = {Qt::red, Qt::green, Qt::blue, Qt::yellow, Qt::white, Qt::black};
 constexpr int Toolbar::Thicknesses[];
@@ -244,20 +245,40 @@ void Toolbar::onCopyClicked()
 void Toolbar::onOcr()
 {
     QImage img = m_overlay->croppedImage();
-    if (img.isNull()) return;
+    std::cout << "=== OCR DEBUG ===" << std::endl;
+    std::cout << "Image is null: " << img.isNull() << std::endl;
+    std::cout << "Image size: " << img.width() << "x" << img.height() << std::endl;
+    std::cout << "Image format: " << img.format() << std::endl;
+    std::cout << "Image depth: " << img.depth() << std::endl;
+    std::cout << "Image bytes per line: " << img.bytesPerLine() << std::endl;
+    std::cout << "Image total bytes: " << img.sizeInBytes() << std::endl;
+    
+    if (img.isNull()) {
+        std::cout << "Image is null, returning" << std::endl;
+        return;
+    }
 
     setEnabled(false);
     setCursor(Qt::WaitCursor);
 
     QtConcurrent::run([this, img]() {
+        std::cout << "=== Background thread started ===" << std::endl;
         static OcrEngine ocrEngine;
+        std::cout << "OCR engine initialized: " << ocrEngine.isInitialized() << std::endl;
+        
         if (!ocrEngine.isInitialized()) {
             QString modelsDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/models";
+            std::cout << "Trying to init OCR from: " << modelsDir.toStdString() << std::endl;
             if (!ocrEngine.init(modelsDir)) {
+                std::cout << "Init failed from: " << modelsDir.toStdString() << std::endl;
                 modelsDir = QCoreApplication::applicationDirPath() + "/../share/openpix/models";
+                std::cout << "Trying alternative path: " << modelsDir.toStdString() << std::endl;
                 if (!ocrEngine.init(modelsDir)) {
+                    std::cout << "Init failed from: " << modelsDir.toStdString() << std::endl;
                     modelsDir = "/usr/share/openpix/models";
+                    std::cout << "Trying system path: " << modelsDir.toStdString() << std::endl;
                     if (!ocrEngine.init(modelsDir)) {
+                        std::cout << "All init attempts failed" << std::endl;
                         QMetaObject::invokeMethod(this, [this]() {
                             QMessageBox::warning(m_overlay, "OCR Error",
                                 "OCR models not found. Place models in ~/.local/share/openpix/models/");
@@ -269,8 +290,17 @@ void Toolbar::onOcr()
                 }
             }
         }
+        
+        std::cout << "OCR engine ready. Calling recognize..." << std::endl;
+        std::cout << "Image to recognize: " << img.width() << "x" << img.height() << " format: " << img.format() << std::endl;
 
         QString text = ocrEngine.recognize(img);
+        
+        std::cout << "=== OCR RESULT ===" << std::endl;
+        std::cout << "Result length: " << text.length() << std::endl;
+        std::cout << "Result is empty: " << text.isEmpty() << std::endl;
+        std::cout << "Result text: [" << text.toStdString() << "]" << std::endl;
+        std::cout << "==================" << std::endl;
 
         QMetaObject::invokeMethod(this, [this, text]() {
             setEnabled(true);

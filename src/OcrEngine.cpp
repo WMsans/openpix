@@ -4,6 +4,8 @@
 #include <QDebug>
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <iostream>
 
 static cv::Mat qImageToCvMat(const QImage &image)
 {
@@ -65,7 +67,7 @@ bool OcrEngine::init(const QString &modelsDir)
 
     m_ocr->setNumThread(4);
     m_ocr->setGpuIndex(-1);
-    m_ocr->initLogger(false, false, false);
+    m_ocr->initLogger(true, false, false);
 
     bool success = m_ocr->initModels(
         detPath.toStdString(),
@@ -87,19 +89,42 @@ bool OcrEngine::init(const QString &modelsDir)
 
 QString OcrEngine::recognize(const QImage &image)
 {
+    std::cout << "=== OcrEngine::recognize called ===" << std::endl;
+    std::cout << "Initialized: " << m_initialized << std::endl;
+    std::cout << "Image null: " << image.isNull() << std::endl;
+    std::cout << "Image size: " << image.width() << "x" << image.height() << std::endl;
+    std::cout << "Image format: " << image.format() << std::endl;
+    
     if (!m_initialized) {
         m_error = "OcrEngine not initialized";
+        std::cout << "ERROR: Not initialized" << std::endl;
         return QString();
     }
 
     if (image.isNull()) {
         m_error = "Invalid image";
+        std::cout << "ERROR: Image is null" << std::endl;
         return QString();
     }
 
+    std::cout << "Converting QImage to cv::Mat..." << std::endl;
+    
+    QString debugPath = "/tmp/ocr_debug_input.png";
+    image.save(debugPath);
+    std::cout << "Saved debug image to: " << debugPath.toStdString() << std::endl;
+    
     cv::Mat mat = qImageToCvMat(image);
+    std::cout << "Mat empty: " << mat.empty() << std::endl;
+    std::cout << "Mat size: " << mat.cols << "x" << mat.rows << std::endl;
+    std::cout << "Mat channels: " << mat.channels() << std::endl;
+    std::cout << "Mat type: " << mat.type() << std::endl;
+    
+    cv::imwrite("/tmp/ocr_debug_mat.png", mat);
+    std::cout << "Saved mat image to: /tmp/ocr_debug_mat.png" << std::endl;
+    
     if (mat.empty()) {
         m_error = "Failed to convert image";
+        std::cout << "ERROR: Mat conversion failed" << std::endl;
         return QString();
     }
 
@@ -111,6 +136,7 @@ QString OcrEngine::recognize(const QImage &image)
     constexpr bool doAngle = true;
     constexpr bool mostAngle = true;
 
+    std::cout << "Calling OCR detect..." << std::endl;
     OcrResult result = m_ocr->detect(
         mat,
         padding,
@@ -122,11 +148,23 @@ QString OcrEngine::recognize(const QImage &image)
         mostAngle
     );
 
-    QString text;
-    for (const auto &block : result.textBlocks) {
-        if (!text.isEmpty())
-            text += '\n';
-        text += QString::fromStdString(block.text);
+    qDebug() << "OCR detect completed. TextBlocks count:" << result.textBlocks.size();
+    qDebug() << "OCR strRes:" << QString::fromStdString(result.strRes);
+
+    QString text = QString::fromStdString(result.strRes).trimmed();
+    
+    if (text.isEmpty()) {
+        for (const auto &block : result.textBlocks) {
+            QString blockText = QString::fromStdString(block.text);
+            if (!blockText.trimmed().isEmpty()) {
+                qDebug() << "Block text:" << blockText;
+                if (!text.isEmpty())
+                    text += '\n';
+                text += blockText;
+            }
+        }
     }
+    
+    qDebug() << "Final OCR text:" << text;
     return text;
 }

@@ -10,6 +10,7 @@
 #include <QApplication>
 #include <QScreen>
 #include <QtMath>
+#include <iostream>
 
 OverlayWidget::OverlayWidget(const QImage &screenshot, CaptureManager *captureManager,
                              QWidget *parent)
@@ -51,10 +52,34 @@ OverlayWidget::OverlayWidget(const QImage &screenshot, CaptureManager *captureMa
 
 QImage OverlayWidget::croppedImage() const
 {
+    std::cout << "=== croppedImage() called ===" << std::endl;
+    std::cout << "Screenshot size: " << m_screenshot.width() << "x" << m_screenshot.height() << std::endl;
+    std::cout << "Selection valid: " << m_selection.isValid() << std::endl;
+    std::cout << "Selection rect (widget coords): " << m_selection.x() << "," << m_selection.y() << " " << m_selection.width() << "x" << m_selection.height() << std::endl;
+    std::cout << "Widget geometry: " << geometry().x() << "," << geometry().y() << " " << geometry().width() << "x" << geometry().height() << std::endl;
+    
     if (m_selection.isValid()) {
-        QImage base = m_screenshot.copy(m_selection);
+        double scaleX = static_cast<double>(m_screenshot.width()) / width();
+        double scaleY = static_cast<double>(m_screenshot.height()) / height();
+        
+        std::cout << "Scale factors: X=" << scaleX << " Y=" << scaleY << std::endl;
+        
+        QRect scaledSelection(
+            static_cast<int>(m_selection.x() * scaleX),
+            static_cast<int>(m_selection.y() * scaleY),
+            static_cast<int>(m_selection.width() * scaleX),
+            static_cast<int>(m_selection.height() * scaleY)
+        );
+        
+        std::cout << "Scaled selection rect (screenshot coords): " << scaledSelection.x() << "," << scaledSelection.y() << " " << scaledSelection.width() << "x" << scaledSelection.height() << std::endl;
+        
+        QImage base = m_screenshot.copy(scaledSelection);
+        std::cout << "Cropped image size: " << base.width() << "x" << base.height() << std::endl;
+        base.save("/tmp/selection_debug.png");
+        std::cout << "Saved selection to /tmp/selection_debug.png" << std::endl;
+        
         if (m_annotationManager && m_annotationManager->hasAnnotations()) {
-            return m_annotationManager->composite(m_screenshot, m_selection);
+            return m_annotationManager->composite(m_screenshot, scaledSelection);
         }
         return base;
     }
