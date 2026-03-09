@@ -33,4 +33,5 @@ private:
     QPushButton *m_finishBtn = nullptr;
     QPushButton *m_cancelBtn = nullptr;
     QLabel *m_countLabel = nullptr;
+    QMetaObject::Connection m_captureConnection;
 };

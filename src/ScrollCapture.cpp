@@ -85,13 +85,18 @@ void ScrollCapture::captureFrame()
     }
 
     m_captureBtn->setEnabled(false);
-    connect(m_captureManager, &CaptureManager::captured,
-            this, &ScrollCapture::onFrameCaptured, Qt::UniqueConnection);
+    m_captureConnection = connect(m_captureManager, &CaptureManager::captured,
+        this, &ScrollCapture::onFrameCaptured);
     m_captureManager->capture();
 }
 
 void ScrollCapture::onFrameCaptured(const QImage &image)
 {
+    if (m_captureConnection) {
+        disconnect(m_captureConnection);
+        m_captureConnection = QMetaObject::Connection();
+    }
+
     m_captureBtn->setEnabled(true);
 
     QImage cropped;
