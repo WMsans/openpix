@@ -95,6 +95,7 @@ add_executable(openpix
     src/OcrEngine.cpp
     src/Stitcher.cpp
     src/ScrollCapture.cpp
+    src/LongImageWidget.cpp
     ${WLR_SCREENCOPY_C}
     ${WLR_SCREENCOPY_H}
     ${RAPIDOCR_SOURCES}
