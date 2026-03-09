@@ -16,6 +16,7 @@
 #include <QStandardPaths>
 #include <QtConcurrent>
 #include <QProcess>
+#include <QBuffer>
 #include <iostream>
 
 const QColor Toolbar::Colors[6] = {Qt::red, Qt::green, Qt::blue, Qt::yellow, Qt::white, Qt::black};
@@ -236,10 +237,24 @@ void Toolbar::onCopyClicked()
     QImage image = m_overlay->croppedImage();
     if (image.isNull()) return;
 
-    auto *mimeData = new QMimeData();
-    mimeData->setImageData(image);
+    QByteArray imageData;
+    QBuffer buffer(&imageData);
+    buffer.open(QIODevice::WriteOnly);
+    image.save(&buffer, "PNG");
+    buffer.close();
 
-    QApplication::clipboard()->setMimeData(mimeData);
+    QProcess wlCopy;
+    wlCopy.start("wl-copy", QStringList() << "-t" << "image/png");
+    wlCopy.write(imageData);
+    wlCopy.closeWriteChannel();
+    wlCopy.waitForFinished(1000);
+
+    if (wlCopy.exitCode() != 0) {
+        qWarning() << "wl-copy failed:" << wlCopy.readAllStandardError();
+        QMessageBox::warning(m_overlay, "Copy Failed", "Failed to copy image to clipboard");
+        return;
+    }
+
     emit quitRequested();
 }
 
