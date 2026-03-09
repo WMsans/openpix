@@ -47,6 +47,11 @@ QImage Stitcher::stitch(const QVector<QImage> &frames, QString *errorOut)
     if (frames.size() == 1)
         return frames.first();
     
+    if (frames.first().isNull()) {
+        if (errorOut) *errorOut = "Frame 0 is null or invalid";
+        return QImage();
+    }
+    
     int width = frames.first().width();
     
     for (int i = 1; i < frames.size(); ++i) {
