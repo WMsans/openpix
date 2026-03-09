@@ -65,6 +65,10 @@ private:
     static void frameReady(void *data, zwlr_screencopy_frame_v1 *frame,
                            uint32_t tvSecHi, uint32_t tvSecLo, uint32_t tvNsec);
     static void frameFailed(void *data, zwlr_screencopy_frame_v1 *frame);
+    static void frameDamage(void *data, zwlr_screencopy_frame_v1 *frame,
+                            uint32_t x, uint32_t y, uint32_t width, uint32_t height);
+    static void frameLinuxDmabuf(void *data, zwlr_screencopy_frame_v1 *frame,
+                                  uint32_t format, uint32_t width, uint32_t height);
 
 private slots:
     void onPortalResponse(uint response, const QVariantMap &results);

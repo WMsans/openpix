@@ -37,9 +37,9 @@ bool OcrEngine::init(const QString &modelsDir)
         return false;
     }
 
-    QString detPath = dir.filePath("ch_PP-OCRv3_det_infer.onnx");
-    QString clsPath = dir.filePath("ch_PP-OCRv3_cls_infer.onnx");
-    QString recPath = dir.filePath("ch_PP-OCRv3_rec_infer.onnx");
+    QString detPath = dir.filePath("ch_PP-OCRv4_det_infer.onnx");
+    QString clsPath = dir.filePath("ch_ppocr_mobile_v2.0_cls_infer.onnx");
+    QString recPath = dir.filePath("ch_PP-OCRv4_rec_infer.onnx");
     QString keysPath = dir.filePath("keys.txt");
 
     if (!QFile::exists(detPath)) {

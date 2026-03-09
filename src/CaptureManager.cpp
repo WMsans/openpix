@@ -215,6 +215,16 @@ void CaptureManager::frameFailed(void *data, zwlr_screencopy_frame_v1 *)
     self->m_wlr.copyFailed = true;
 }
 
+void CaptureManager::frameDamage(void *, zwlr_screencopy_frame_v1 *,
+                                  uint32_t, uint32_t, uint32_t, uint32_t)
+{
+}
+
+void CaptureManager::frameLinuxDmabuf(void *, zwlr_screencopy_frame_v1 *,
+                                       uint32_t, uint32_t, uint32_t)
+{
+}
+
 void CaptureManager::captureViaWlrScreencopy()
 {
     static const struct wl_registry_listener registryListener = {
@@ -227,8 +237,8 @@ void CaptureManager::captureViaWlrScreencopy()
         .flags = CaptureManager::frameFlags,
         .ready = CaptureManager::frameReady,
         .failed = CaptureManager::frameFailed,
-        .damage = nullptr,
-        .linux_dmabuf = nullptr,
+        .damage = CaptureManager::frameDamage,
+        .linux_dmabuf = CaptureManager::frameLinuxDmabuf,
         .buffer_done = CaptureManager::frameBufferDone,
     };
 
