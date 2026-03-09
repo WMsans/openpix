@@ -1,0 +1,3 @@
+/home/jeremy/Development/openpix/_deps/rapidocr-subbuild/CMakeFiles/rapidocr-populate.dir
+/home/jeremy/Development/openpix/_deps/rapidocr-subbuild/CMakeFiles/edit_cache.dir
+/home/jeremy/Development/openpix/_deps/rapidocr-subbuild/CMakeFiles/rebuild_cache.dir

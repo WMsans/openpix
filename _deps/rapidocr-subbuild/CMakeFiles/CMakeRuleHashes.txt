@@ -1,0 +1,11 @@
+# Hashes of file build rules.
+5230c1c4fa89ca332567aa80eaf12e24 CMakeFiles/rapidocr-populate
+4c4c12747c894047e8e9afc64f4cc2b6 CMakeFiles/rapidocr-populate-complete
+158d67b49557103f98719c04c840bbbd rapidocr-populate-prefix/src/rapidocr-populate-stamp/rapidocr-populate-build
+228d717001cad810d55c172973bb6db7 rapidocr-populate-prefix/src/rapidocr-populate-stamp/rapidocr-populate-configure
+ae001b5d62b9250ff7f5a5371eb8ad77 rapidocr-populate-prefix/src/rapidocr-populate-stamp/rapidocr-populate-download
+8b9a872366efd77c6aa60b8720f848f3 rapidocr-populate-prefix/src/rapidocr-populate-stamp/rapidocr-populate-install
+b8bcaed21c79f81b4eb42b6ff578a740 rapidocr-populate-prefix/src/rapidocr-populate-stamp/rapidocr-populate-mkdir
+9196e083c4e9c1e54de2aeaeb8b5e7f0 rapidocr-populate-prefix/src/rapidocr-populate-stamp/rapidocr-populate-patch
+d7721cc0e1761a1c049bf903e84babca rapidocr-populate-prefix/src/rapidocr-populate-stamp/rapidocr-populate-test
+b92273b765a18fe850f87781f99a734c rapidocr-populate-prefix/src/rapidocr-populate-stamp/rapidocr-populate-update

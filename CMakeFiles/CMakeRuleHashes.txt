@@ -1,0 +1,8 @@
+# Hashes of file build rules.
+4fa01d111fdeda43af24231a083cbc01 CMakeFiles/openpix_autogen
+4fa01d111fdeda43af24231a083cbc01 CMakeFiles/openpix_autogen_timestamp_deps
+4fa01d111fdeda43af24231a083cbc01 CMakeFiles/test_stitcher_autogen
+ef1fe509ca5853f740a11d723e75830c openpix_autogen/timestamp
+294a9867740e9e953e29e0a6b9e0bb58 test_stitcher_autogen/timestamp
+49ab7692360820d1da98f43e14aae155 wlr-screencopy-unstable-v1-client-protocol.h
+c69290902e88ac3007c68c62264580f8 wlr-screencopy-unstable-v1-protocol.c

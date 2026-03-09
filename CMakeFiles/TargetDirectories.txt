@@ -1,0 +1,13 @@
+/home/jeremy/Development/openpix/CMakeFiles/openpix.dir
+/home/jeremy/Development/openpix/CMakeFiles/test_stitcher.dir
+/home/jeremy/Development/openpix/CMakeFiles/test.dir
+/home/jeremy/Development/openpix/CMakeFiles/edit_cache.dir
+/home/jeremy/Development/openpix/CMakeFiles/rebuild_cache.dir
+/home/jeremy/Development/openpix/CMakeFiles/list_install_components.dir
+/home/jeremy/Development/openpix/CMakeFiles/install.dir
+/home/jeremy/Development/openpix/CMakeFiles/install/local.dir
+/home/jeremy/Development/openpix/CMakeFiles/install/strip.dir
+/home/jeremy/Development/openpix/CMakeFiles/openpix_autogen_timestamp_deps.dir
+/home/jeremy/Development/openpix/CMakeFiles/openpix_autogen.dir
+/home/jeremy/Development/openpix/CMakeFiles/test_stitcher_autogen_timestamp_deps.dir
+/home/jeremy/Development/openpix/CMakeFiles/test_stitcher_autogen.dir
