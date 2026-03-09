@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
     QObject::connect(&captureManager, &CaptureManager::captured,
         [&](const QImage &image) {
             qDebug() << "Captured screenshot:" << image.size();
-            auto overlay = new OverlayWidget(image);
+            auto overlay = new OverlayWidget(image, &captureManager);
             QObject::connect(overlay, &OverlayWidget::cancelled, &app, &QApplication::quit);
             QObject::connect(overlay, &OverlayWidget::regionSelected, [&](const QRect &region) {
                 qDebug() << "Region selected:" << region;

@@ -94,11 +94,10 @@ add_executable(openpix
     src/AnnotationManager.cpp
     src/OcrEngine.cpp
     src/Stitcher.cpp
+    src/ScrollCapture.cpp
     ${WLR_SCREENCOPY_C}
     ${WLR_SCREENCOPY_H}
     ${RAPIDOCR_SOURCES}
-    # TODO: Add as implemented
-    # src/ScrollCapture.cpp
 )
 
 target_include_directories(openpix PRIVATE
