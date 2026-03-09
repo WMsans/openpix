@@ -13,6 +13,7 @@
 #include <QDebug>
 #include <QMessageBox>
 #include <QCoreApplication>
+#include <QtConcurrent>
 
 const QColor Toolbar::Colors[6] = {Qt::red, Qt::green, Qt::blue, Qt::yellow, Qt::white, Qt::black};
 constexpr int Toolbar::Thicknesses[];
@@ -244,25 +245,40 @@ void Toolbar::onOcr()
     QImage img = m_overlay->croppedImage();
     if (img.isNull()) return;
 
-    static OcrEngine ocrEngine;
-    if (!ocrEngine.isInitialized()) {
-        QString modelsDir = QCoreApplication::applicationDirPath() + "/../share/openpix/models";
-        if (!ocrEngine.init(modelsDir)) {
-            modelsDir = "/usr/share/openpix/models";
+    setEnabled(false);
+    setCursor(Qt::WaitCursor);
+
+    QtConcurrent::run([this, img]() {
+        static OcrEngine ocrEngine;
+        if (!ocrEngine.isInitialized()) {
+            QString modelsDir = QCoreApplication::applicationDirPath() + "/../share/openpix/models";
             if (!ocrEngine.init(modelsDir)) {
-                QMessageBox::warning(m_overlay, "OCR Error",
-                    "OCR models not found. Place models in share/openpix/models/");
-                return;
+                modelsDir = "/usr/share/openpix/models";
+                if (!ocrEngine.init(modelsDir)) {
+                    QMetaObject::invokeMethod(this, [this]() {
+                        QMessageBox::warning(m_overlay, "OCR Error",
+                            "OCR models not found. Place models in share/openpix/models/");
+                        setEnabled(true);
+                        unsetCursor();
+                    }, Qt::QueuedConnection);
+                    return;
+                }
             }
         }
-    }
 
-    QString text = ocrEngine.recognize(img);
-    if (text.isEmpty()) {
-        QMessageBox::information(m_overlay, "OCR", "No text detected in selection.");
-        return;
-    }
+        QString text = ocrEngine.recognize(img);
 
-    QApplication::clipboard()->setText(text);
-    qApp->quit();
+        QMetaObject::invokeMethod(this, [this, text]() {
+            setEnabled(true);
+            unsetCursor();
+
+            if (text.isEmpty()) {
+                QMessageBox::information(m_overlay, "OCR", "No text detected in selection.");
+                return;
+            }
+
+            QApplication::clipboard()->setText(text);
+            qApp->quit();
+        }, Qt::QueuedConnection);
+    });
 }

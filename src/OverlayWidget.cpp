@@ -1,6 +1,8 @@
 #include "OverlayWidget.h"
 #include "Toolbar.h"
 #include "AnnotationManager.h"
+#include "ScrollCapture.h"
+#include "CaptureManager.h"
 #include <QPainter>
 #include <QPainterPath>
 #include <QMouseEvent>
@@ -9,10 +11,12 @@
 #include <QScreen>
 #include <QtMath>
 
-OverlayWidget::OverlayWidget(const QImage &screenshot, QWidget *parent)
+OverlayWidget::OverlayWidget(const QImage &screenshot, CaptureManager *captureManager,
+                             QWidget *parent)
     : QWidget(parent)
     , m_screenshot(screenshot)
     , m_annotationManager(std::make_unique<AnnotationManager>())
+    , m_captureManager(captureManager)
 {
     setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::BypassWindowManagerHint);
     setAttribute(Qt::WA_TranslucentBackground, false);
@@ -36,6 +40,9 @@ OverlayWidget::OverlayWidget(const QImage &screenshot, QWidget *parent)
     connect(m_toolbar, &Toolbar::annotationToolChanged, this, &OverlayWidget::onAnnotationToolChanged);
     connect(m_toolbar, &Toolbar::undoRequested, this, &OverlayWidget::onUndoRequested);
     connect(m_toolbar, &Toolbar::annotationDone, this, &OverlayWidget::onAnnotationDone);
+    connect(m_toolbar, &Toolbar::quitRequested, this, []{
+        qApp->quit();
+    });
     m_toolbar->hide();
 
     show();
@@ -435,4 +442,28 @@ void OverlayWidget::onAnnotationDone()
     }
     updateToolbarPosition();
     update();
+}
+
+void OverlayWidget::startScrollCapture()
+{
+    if (!m_selection.isValid() || !m_captureManager) {
+        return;
+    }
+
+    hide();
+
+    ScrollCapture *scrollCapture = new ScrollCapture(m_captureManager, m_selection);
+
+    connect(scrollCapture, &ScrollCapture::finished, this, [this](const QImage &stitchedImage) {
+        m_screenshot = stitchedImage;
+        m_selection = QRect();
+        show();
+        setFocus();
+        update();
+    });
+
+    connect(scrollCapture, &ScrollCapture::cancelled, this, [this]() {
+        show();
+        setFocus();
+    });
 }

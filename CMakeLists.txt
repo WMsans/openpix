@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 
 # --- Dependencies ---
-find_package(Qt6 REQUIRED COMPONENTS Widgets Gui DBus)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Gui DBus Concurrent)
 find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(WAYLAND_CLIENT REQUIRED wayland-client)
@@ -93,12 +93,11 @@ add_executable(openpix
     src/Toolbar.cpp
     src/AnnotationManager.cpp
     src/OcrEngine.cpp
+    src/Stitcher.cpp
+    src/ScrollCapture.cpp
     ${WLR_SCREENCOPY_C}
     ${WLR_SCREENCOPY_H}
     ${RAPIDOCR_SOURCES}
-    # TODO: Add as implemented
-    # src/ScrollCapture.cpp
-    # src/Stitcher.cpp
 )
 
 target_include_directories(openpix PRIVATE
@@ -113,10 +112,19 @@ target_link_libraries(openpix PRIVATE
     Qt6::Widgets
     Qt6::Gui
     Qt6::DBus
+    Qt6::Concurrent
     ${OpenCV_LIBS}
     ${WAYLAND_CLIENT_LIBRARIES}
     ${ONNXRUNTIME_LIBRARIES}
 )
+
+# --- Tests ---
+enable_testing()
+find_package(Qt6 REQUIRED COMPONENTS Test)
+add_executable(test_stitcher tests/test_stitcher.cpp src/Stitcher.cpp)
+target_include_directories(test_stitcher PRIVATE ${CMAKE_BINARY_DIR} src/)
+target_link_libraries(test_stitcher Qt6::Test Qt6::Gui ${OpenCV_LIBS})
+add_test(NAME test_stitcher COMMAND test_stitcher)
 
 # --- Install ---
 install(TARGETS openpix RUNTIME DESTINATION bin)

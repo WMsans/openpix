@@ -13,18 +13,18 @@ int main(int argc, char *argv[])
     app.setApplicationName("openpix");
     app.setApplicationVersion("0.1.0");
 
-    OcrEngine ocrEngine;
+    OcrEngine *ocrEngine = new OcrEngine(&app);
     QString modelsDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/../share/openpix/models";
-    if (!ocrEngine.init(modelsDir)) {
-        qWarning() << "OCR initialization failed:" << ocrEngine.lastError();
+    if (!ocrEngine->init(modelsDir)) {
+        qWarning() << "OCR initialization failed:" << ocrEngine->lastError();
     }
 
-    CaptureManager captureManager;
+    CaptureManager *captureManager = new CaptureManager(&app);
 
-    QObject::connect(&captureManager, &CaptureManager::captured,
+    QObject::connect(captureManager, &CaptureManager::captured,
         [&](const QImage &image) {
             qDebug() << "Captured screenshot:" << image.size();
-            auto overlay = new OverlayWidget(image);
+            auto overlay = new OverlayWidget(image, captureManager);
             QObject::connect(overlay, &OverlayWidget::cancelled, &app, &QApplication::quit);
             QObject::connect(overlay, &OverlayWidget::regionSelected, [&](const QRect &region) {
                 qDebug() << "Region selected:" << region;
@@ -36,11 +36,11 @@ int main(int argc, char *argv[])
                     QMessageBox::information(nullptr, "OpenPix", "No region selected");
                     return;
                 }
-                if (!ocrEngine.isInitialized()) {
-                    QMessageBox::warning(nullptr, "OpenPix", "OCR not initialized: " + ocrEngine.lastError());
+                if (!ocrEngine->isInitialized()) {
+                    QMessageBox::warning(nullptr, "OpenPix", "OCR not initialized: " + ocrEngine->lastError());
                     return;
                 }
-                QString text = ocrEngine.recognize(cropped);
+                QString text = ocrEngine->recognize(cropped);
                 if (text.isEmpty()) {
                     QMessageBox::information(nullptr, "OpenPix", "No text found");
                 } else {
@@ -52,12 +52,12 @@ int main(int argc, char *argv[])
             });
         });
 
-    QObject::connect(&captureManager, &CaptureManager::failed,
+    QObject::connect(captureManager, &CaptureManager::failed,
         [&](const QString &error) {
             QMessageBox::critical(nullptr, "OpenPix", "Screenshot capture failed: " + error);
             app.quit();
         });
 
-    captureManager.capture();
+    captureManager->capture();
     return app.exec();
 }

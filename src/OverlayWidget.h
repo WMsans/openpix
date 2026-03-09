@@ -8,13 +8,16 @@
 #include "Toolbar.h"
 
 class AnnotationManager;
+class CaptureManager;
 
 class OverlayWidget : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit OverlayWidget(const QImage &screenshot, QWidget *parent = nullptr);
+    explicit OverlayWidget(const QImage &screenshot, CaptureManager *captureManager = nullptr,
+                           QWidget *parent = nullptr);
+    void startScrollCapture();
 
     QImage croppedImage() const;
 
@@ -75,6 +78,7 @@ private:
     Toolbar *m_toolbar = nullptr;
     std::unique_ptr<AnnotationManager> m_annotationManager;
     bool m_annotationMode = false;
+    CaptureManager *m_captureManager = nullptr;
 
     static constexpr int HandleSize = 8;
     static constexpr int MinSelectionSize = 5;
