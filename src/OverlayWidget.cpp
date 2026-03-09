@@ -246,6 +246,7 @@ void OverlayWidget::mousePressEvent(QMouseEvent *event)
     if (h != Handle::None) {
         m_state = State::Resizing;
         m_activeHandle = h;
+        m_initialSelection = m_selection;
         m_selectionStartPos = m_selection.topLeft();
         m_dragStart = event->pos();
         return;
@@ -293,25 +294,25 @@ void OverlayWidget::mouseMoveEvent(QMouseEvent *event)
 
         switch (m_activeHandle) {
         case Handle::TopLeft:
-            r = QRect(m_selectionStartPos + delta, m_selection.bottomRight());
+            r = QRect(m_selectionStartPos + delta, m_initialSelection.bottomRight());
             break;
         case Handle::Top:
-            r = QRect(QPoint(m_selection.left(), m_selectionStartPos.y() + delta.y()), m_selection.bottomRight());
+            r = QRect(QPoint(m_initialSelection.left(), m_selectionStartPos.y() + delta.y()), m_initialSelection.bottomRight());
             break;
         case Handle::TopRight:
-            r = QRect(QPoint(m_selection.right() + delta.x(), m_selectionStartPos.y() + delta.y()), m_selection.bottomLeft());
+            r = QRect(m_initialSelection.topRight() + delta, m_initialSelection.bottomLeft());
             break;
         case Handle::Left:
-            r = QRect(QPoint(m_selectionStartPos.x() + delta.x(), m_selection.top()), m_selection.bottomRight());
+            r = QRect(QPoint(m_selectionStartPos.x() + delta.x(), m_initialSelection.top()), m_initialSelection.bottomRight());
             break;
         case Handle::Right:
-            r = QRect(m_selection.topLeft(), QPoint(m_selection.right() + delta.x(), m_selection.bottom()));
+            r = QRect(m_initialSelection.topLeft(), QPoint(m_initialSelection.right() + delta.x(), m_initialSelection.bottom()));
             break;
         case Handle::BottomLeft:
-            r = QRect(QPoint(m_selectionStartPos.x() + delta.x(), m_selection.bottom() + delta.y()), m_selection.topRight());
+            r = QRect(m_initialSelection.bottomLeft() + delta, m_initialSelection.topRight());
             break;
         case Handle::Bottom:
-            r = QRect(m_selection.topLeft(), QPoint(m_selection.right(), m_selection.bottom() + delta.y()));
+            r = QRect(m_initialSelection.topLeft(), QPoint(m_initialSelection.right(), m_initialSelection.bottom() + delta.y()));
             break;
         case Handle::BottomRight:
             r = QRect(m_selection.topLeft(), m_selection.bottomRight() + delta);

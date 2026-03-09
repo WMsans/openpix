@@ -70,6 +70,7 @@ private:
 
     QImage m_screenshot;
     QRect m_selection;
+    QRect m_initialSelection;
     State m_state = State::Idle;
     Handle m_activeHandle = Handle::None;
     QPoint m_dragStart;
