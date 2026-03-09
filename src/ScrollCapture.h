@@ -15,6 +15,7 @@ class ScrollCapture : public QWidget
 public:
     ScrollCapture(CaptureManager *captureManager, const QRect &captureRegion,
                   QWidget *parent = nullptr);
+    ~ScrollCapture();
 
 signals:
     void finished(const QImage &stitchedImage);

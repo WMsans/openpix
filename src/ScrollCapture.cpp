@@ -69,13 +69,23 @@ ScrollCapture::ScrollCapture(CaptureManager *captureManager, const QRect &captur
     panel->adjustSize();
     setFixedSize(panel->size());
 
-    QScreen *primaryScreen = QGuiApplication::primaryScreen();
-    QRect screenGeometry = primaryScreen->geometry();
-    int x = screenGeometry.left() + (screenGeometry.width() - width()) / 2;
-    int y = screenGeometry.top() + 20;
-    move(x, y);
+    adjustSize();
+    auto *screen = QGuiApplication::primaryScreen();
+    if (screen) {
+        QRect screenGeom = screen->geometry();
+        move(screenGeom.center().x() - width() / 2, screenGeom.top() + 20);
+    } else {
+        move(100, 20);
+    }
 
     show();
+}
+
+ScrollCapture::~ScrollCapture()
+{
+    if (m_captureConnection) {
+        disconnect(m_captureConnection);
+    }
 }
 
 void ScrollCapture::captureFrame()
