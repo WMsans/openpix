@@ -40,6 +40,9 @@ OverlayWidget::OverlayWidget(const QImage &screenshot, CaptureManager *captureMa
     connect(m_toolbar, &Toolbar::annotationToolChanged, this, &OverlayWidget::onAnnotationToolChanged);
     connect(m_toolbar, &Toolbar::undoRequested, this, &OverlayWidget::onUndoRequested);
     connect(m_toolbar, &Toolbar::annotationDone, this, &OverlayWidget::onAnnotationDone);
+    connect(m_toolbar, &Toolbar::quitRequested, this, []{
+        qApp->quit();
+    });
     m_toolbar->hide();
 
     show();
