@@ -56,6 +56,7 @@ private:
     void onDoneClicked();
     void onSaveClicked();
     void onCopyClicked();
+    void onOcr();
     void updateColorButton();
     void updateThicknessButton();
 

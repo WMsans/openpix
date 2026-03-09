@@ -3,7 +3,6 @@
 #include <QString>
 #include <QImage>
 #include <memory>
-#include <opencv2/core.hpp>
 
 class OcrLite;
 
@@ -18,12 +17,10 @@ public:
 
     QString recognize(const QImage &image);
 
-    QString lastError() const { return m_lastError; }
+    QString lastError() const { return m_error; }
 
 private:
-    cv::Mat qImageToCvMat(const QImage &image) const;
-
     std::unique_ptr<OcrLite> m_ocr;
     bool m_initialized = false;
-    QString m_lastError;
+    QString m_error;
 };

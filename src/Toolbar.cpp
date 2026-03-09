@@ -1,5 +1,6 @@
 #include "Toolbar.h"
 #include "OverlayWidget.h"
+#include "OcrEngine.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QPushButton>
@@ -10,6 +11,8 @@
 #include <QDateTime>
 #include <QDir>
 #include <QDebug>
+#include <QMessageBox>
+#include <QCoreApplication>
 
 const QColor Toolbar::Colors[6] = {Qt::red, Qt::green, Qt::blue, Qt::yellow, Qt::white, Qt::black};
 constexpr int Toolbar::Thicknesses[];
@@ -44,7 +47,7 @@ void Toolbar::setupMainToolbar()
 
     connect(saveBtn, &QPushButton::clicked, this, &Toolbar::onSaveClicked);
     connect(copyBtn, &QPushButton::clicked, this, &Toolbar::onCopyClicked);
-    connect(ocrBtn, &QPushButton::clicked, this, &Toolbar::ocrRequested);
+    connect(ocrBtn, &QPushButton::clicked, this, &Toolbar::onOcr);
     connect(annotateBtn, &QPushButton::clicked, this, &Toolbar::annotateRequested);
     connect(scrollBtn, &QPushButton::clicked, this, &Toolbar::scrollCaptureRequested);
 
@@ -234,4 +237,32 @@ void Toolbar::onCopyClicked()
 
     QApplication::clipboard()->setMimeData(mimeData);
     emit quitRequested();
+}
+
+void Toolbar::onOcr()
+{
+    QImage img = m_overlay->croppedImage();
+    if (img.isNull()) return;
+
+    static OcrEngine ocrEngine;
+    if (!ocrEngine.isInitialized()) {
+        QString modelsDir = QCoreApplication::applicationDirPath() + "/../share/openpix/models";
+        if (!ocrEngine.init(modelsDir)) {
+            modelsDir = "/usr/share/openpix/models";
+            if (!ocrEngine.init(modelsDir)) {
+                QMessageBox::warning(m_overlay, "OCR Error",
+                    "OCR models not found. Place models in share/openpix/models/");
+                return;
+            }
+        }
+    }
+
+    QString text = ocrEngine.recognize(img);
+    if (text.isEmpty()) {
+        QMessageBox::information(m_overlay, "OCR", "No text detected in selection.");
+        return;
+    }
+
+    QApplication::clipboard()->setText(text);
+    qApp->quit();
 }
