@@ -2,6 +2,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 #include <QPainter>
+#include <algorithm>
 
 cv::Mat Stitcher::qimageToCvMat(const QImage &image)
 {
@@ -87,6 +88,7 @@ QImage Stitcher::stitch(const QVector<QImage> &frames, QString *errorOut)
     static const int MIN_NEW_CONTENT = 4;
 
     bool anyFailed = false;
+    bool scrollingUp = false;
     int lastKept = 0;
     for (int i = 1; i < frames.size(); ++i) {
         OverlapResult overlapResult = findOverlap(frames[lastKept], frames[i]);
@@ -105,11 +107,16 @@ QImage Stitcher::stitch(const QVector<QImage> &frames, QString *errorOut)
             } else {
                 newContent = frames[i].height() - overlapResult.overlap;
                 if (newContent >= MIN_NEW_CONTENT) {
+                    scrollingUp = true;
                     segments.append({&frames[i], 0, frames[i].height() - overlapResult.overlap});
                     lastKept = i;
                 }
             }
         }
+    }
+    
+    if (scrollingUp) {
+        std::reverse(segments.begin(), segments.end());
     }
     
     if (anyFailed && errorOut) {
