@@ -20,8 +20,9 @@ static cv::Mat qImageToCvMat(const QImage &image)
     return result.clone();
 }
 
-OcrEngine::OcrEngine()
-    : m_ocr(std::make_unique<OcrLite>())
+OcrEngine::OcrEngine(QObject *parent)
+    : QObject(parent)
+    , m_ocr(std::make_unique<OcrLite>())
 {
 }
 

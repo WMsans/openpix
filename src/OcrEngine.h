@@ -2,14 +2,17 @@
 
 #include <QString>
 #include <QImage>
+#include <QObject>
 #include <memory>
 
 class OcrLite;
 
-class OcrEngine
+class OcrEngine : public QObject
 {
+    Q_OBJECT
+
 public:
-    OcrEngine();
+    explicit OcrEngine(QObject *parent = nullptr);
     ~OcrEngine();
 
     bool init(const QString &modelsDir);

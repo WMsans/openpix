@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
     app.setApplicationName("openpix");
     app.setApplicationVersion("0.1.0");
 
-    OcrEngine *ocrEngine = new OcrEngine();
+    OcrEngine *ocrEngine = new OcrEngine(&app);
     QString modelsDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/../share/openpix/models";
     if (!ocrEngine->init(modelsDir)) {
         qWarning() << "OCR initialization failed:" << ocrEngine->lastError();
