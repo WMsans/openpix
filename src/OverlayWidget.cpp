@@ -441,7 +441,7 @@ void OverlayWidget::onAnnotateRequested()
 
 void OverlayWidget::onScrollCaptureRequested()
 {
-    emit scrollCaptureRequested();
+    startScrollCapture();
 }
 
 void OverlayWidget::onAnnotationToolChanged(Toolbar::AnnotationTool tool)
