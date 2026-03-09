@@ -126,49 +126,6 @@ target_include_directories(test_stitcher PRIVATE ${CMAKE_BINARY_DIR} src/)
 target_link_libraries(test_stitcher Qt6::Test Qt6::Gui ${OpenCV_LIBS})
 add_test(NAME test_stitcher COMMAND test_stitcher)
 
-add_executable(test_ocr_direct /tmp/test_ocr_direct.cpp ${RAPIDOCR_SOURCES})
-target_include_directories(test_ocr_direct PRIVATE
-    ${CMAKE_BINARY_DIR}
-    ${ONNXRUNTIME_INCLUDE_DIRS}
-    ${rapidocr_SOURCE_DIR}/include
-    ${rapidocr_SOURCE_DIR}/src
-)
-target_link_libraries(test_ocr_direct PRIVATE
-    Qt6::Core
-    Qt6::Gui
-    ${OpenCV_LIBS}
-    ${ONNXRUNTIME_LIBRARIES}
-)
-
-add_executable(test_ocr_screenshot /tmp/test_ocr_screenshot.cpp ${RAPIDOCR_SOURCES})
-target_include_directories(test_ocr_screenshot PRIVATE
-    ${CMAKE_BINARY_DIR}
-    ${ONNXRUNTIME_INCLUDE_DIRS}
-    ${rapidocr_SOURCE_DIR}/include
-    ${rapidocr_SOURCE_DIR}/src
-)
-target_link_libraries(test_ocr_screenshot PRIVATE
-    Qt6::Core
-    Qt6::Gui
-    ${OpenCV_LIBS}
-    ${ONNXRUNTIME_LIBRARIES}
-)
-
-add_executable(test_ocr_engine /tmp/test_ocr_engine.cpp src/OcrEngine.cpp ${RAPIDOCR_SOURCES})
-target_include_directories(test_ocr_engine PRIVATE
-    ${CMAKE_BINARY_DIR}
-    ${ONNXRUNTIME_INCLUDE_DIRS}
-    ${rapidocr_SOURCE_DIR}/include
-    ${rapidocr_SOURCE_DIR}/src
-    src
-)
-target_link_libraries(test_ocr_engine PRIVATE
-    Qt6::Core
-    Qt6::Gui
-    ${OpenCV_LIBS}
-    ${ONNXRUNTIME_LIBRARIES}
-)
-
 # --- Install ---
 install(TARGETS openpix RUNTIME DESTINATION bin)
 install(DIRECTORY resources/models DESTINATION share/openpix)
