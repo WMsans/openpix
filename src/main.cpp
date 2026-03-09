@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
     CaptureManager *captureManager = new CaptureManager(&app);
 
     QObject::connect(captureManager, &CaptureManager::captured,
-        [&](const QImage &image) {
+        &app, [&](const QImage &image) {
             qDebug() << "Captured screenshot:" << image.size();
             auto overlay = new OverlayWidget(image, captureManager);
             QObject::connect(overlay, &OverlayWidget::cancelled, &app, &QApplication::quit);
@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
                 overlay->close();
                 app.quit();
             });
-        });
+        }, Qt::SingleShotConnection);
 
     QObject::connect(captureManager, &CaptureManager::failed,
         [&](const QString &error) {

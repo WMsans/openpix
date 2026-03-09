@@ -1,12 +1,16 @@
 #include "ScrollCapture.h"
 #include "CaptureManager.h"
 #include "Stitcher.h"
+
 #include <QPushButton>
 #include <QLabel>
 #include <QHBoxLayout>
 #include <QMessageBox>
 #include <QScreen>
 #include <QGuiApplication>
+#include <QTimer>
+
+static const int CAPTURE_INTERVAL_MS = 500;
 
 ScrollCapture::ScrollCapture(CaptureManager *captureManager, const QRect &captureRegion,
                              QWidget *parent)
@@ -53,10 +57,6 @@ ScrollCapture::ScrollCapture(CaptureManager *captureManager, const QRect &captur
     m_countLabel = new QLabel("Frames: 0", panel);
     layout->addWidget(m_countLabel);
 
-    m_captureBtn = new QPushButton("Capture Frame", panel);
-    connect(m_captureBtn, &QPushButton::clicked, this, &ScrollCapture::captureFrame);
-    layout->addWidget(m_captureBtn);
-
     m_finishBtn = new QPushButton("Finish", panel);
     connect(m_finishBtn, &QPushButton::clicked, this, &ScrollCapture::finish);
     layout->addWidget(m_finishBtn);
@@ -78,11 +78,21 @@ ScrollCapture::ScrollCapture(CaptureManager *captureManager, const QRect &captur
         move(100, 20);
     }
 
+    m_captureTimer = new QTimer(this);
+    m_captureTimer->setInterval(CAPTURE_INTERVAL_MS);
+    connect(m_captureTimer, &QTimer::timeout, this, &ScrollCapture::captureFrame);
+
     show();
+
+    captureFrame();
+    m_captureTimer->start();
 }
 
 ScrollCapture::~ScrollCapture()
 {
+    if (m_captureTimer) {
+        m_captureTimer->stop();
+    }
     if (m_captureConnection) {
         disconnect(m_captureConnection);
     }
@@ -90,11 +100,11 @@ ScrollCapture::~ScrollCapture()
 
 void ScrollCapture::captureFrame()
 {
-    if (!m_captureManager) {
+    if (!m_captureManager || m_capturing) {
         return;
     }
 
-    m_captureBtn->setEnabled(false);
+    m_capturing = true;
     m_captureConnection = connect(m_captureManager, &CaptureManager::captured,
         this, &ScrollCapture::onFrameCaptured);
     m_captureManager->capture();
@@ -107,7 +117,7 @@ void ScrollCapture::onFrameCaptured(const QImage &image)
         m_captureConnection = QMetaObject::Connection();
     }
 
-    m_captureBtn->setEnabled(true);
+    m_capturing = false;
 
     QImage cropped;
     if (m_captureRegion.isValid() && m_captureRegion.intersects(image.rect())) {
@@ -123,6 +133,8 @@ void ScrollCapture::onFrameCaptured(const QImage &image)
 
 void ScrollCapture::finish()
 {
+    m_captureTimer->stop();
+
     if (m_frames.size() < 2) {
         QMessageBox::warning(this, "Scroll Capture",
                              "At least 2 frames are required for stitching.");

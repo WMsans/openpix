@@ -475,9 +475,18 @@ void OverlayWidget::startScrollCapture()
         return;
     }
 
+    double scaleX = static_cast<double>(m_screenshot.width()) / width();
+    double scaleY = static_cast<double>(m_screenshot.height()) / height();
+    QRect scaledRegion(
+        static_cast<int>(m_selection.x() * scaleX),
+        static_cast<int>(m_selection.y() * scaleY),
+        static_cast<int>(m_selection.width() * scaleX),
+        static_cast<int>(m_selection.height() * scaleY)
+    );
+
     hide();
 
-    ScrollCapture *scrollCapture = new ScrollCapture(m_captureManager, m_selection);
+    ScrollCapture *scrollCapture = new ScrollCapture(m_captureManager, scaledRegion);
 
     connect(scrollCapture, &ScrollCapture::finished, this, [this](const QImage &stitchedImage) {
         m_screenshot = stitchedImage;
