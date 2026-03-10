@@ -107,6 +107,7 @@ void ScrollCapture::captureFrame()
     }
 
     m_capturing = true;
+    hide();
     m_captureConnection = connect(m_captureManager, &CaptureManager::captured,
         this, &ScrollCapture::onFrameCaptured);
     m_captureManager->capture();
@@ -120,6 +121,7 @@ void ScrollCapture::onFrameCaptured(const QImage &image)
     }
 
     m_capturing = false;
+    show();
 
     QImage cropped;
     if (m_captureRegion.isValid() && m_captureRegion.intersects(image.rect())) {
