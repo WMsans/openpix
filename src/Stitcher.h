@@ -14,6 +14,12 @@ private:
         int overlap;
         ScrollDirection direction;
     };
+    struct PlacedFrame {
+        int frameIndex;
+        int y;
+        int height;
+    };
+    static const int MATCH_SEARCH_DEPTH = 10;
     static OverlapResult findOverlap(const QImage &imgA, const QImage &imgB, double threshold = 0.8);
     static cv::Mat qimageToCvMat(const QImage &image);
 };

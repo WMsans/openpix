@@ -53,14 +53,14 @@ QImage Stitcher::stitch(const QVector<QImage> &frames, QString *errorOut)
         return QImage();
     if (frames.size() == 1)
         return frames.first();
-    
+
     if (frames.first().isNull()) {
         if (errorOut) *errorOut = "Frame 0 is null or invalid";
         return QImage();
     }
-    
+
     int width = frames.first().width();
-    
+
     for (int i = 1; i < frames.size(); ++i) {
         if (frames[i].width() != width) {
             if (errorOut) {
@@ -76,66 +76,119 @@ QImage Stitcher::stitch(const QVector<QImage> &frames, QString *errorOut)
             return QImage();
         }
     }
-    
-    struct Segment {
-        const QImage *image;
-        int startRow;
-        int endRow;
-    };
-    QVector<Segment> segments;
-    segments.append({&frames[0], 0, frames[0].height()});
 
     static const int MIN_NEW_CONTENT = 4;
 
+    QVector<PlacedFrame> placed;
+    placed.append({0, 0, frames[0].height()});
+
     bool anyFailed = false;
-    bool scrollingUp = false;
-    int lastKept = 0;
+
     for (int i = 1; i < frames.size(); ++i) {
-        OverlapResult overlapResult = findOverlap(frames[lastKept], frames[i]);
-        if (overlapResult.overlap < 0) {
-            anyFailed = true;
-            segments.append({&frames[i], 0, frames[i].height()});
-            lastKept = i;
-        } else {
-            int newContent;
-            if (overlapResult.direction == ScrollDirection::Down) {
-                newContent = frames[i].height() - overlapResult.overlap;
-                if (newContent >= MIN_NEW_CONTENT) {
-                    segments.append({&frames[i], overlapResult.overlap, frames[i].height()});
-                    lastKept = i;
-                }
+        bool matched = false;
+        int newY = 0;
+        bool redundant = false;
+
+        int searchStart = placed.size() - 1;
+        int searchEnd = std::max(0, static_cast<int>(placed.size()) - MATCH_SEARCH_DEPTH);
+
+        for (int j = searchStart; j >= searchEnd; --j) {
+            OverlapResult result = findOverlap(frames[placed[j].frameIndex], frames[i]);
+            if (result.overlap < 0)
+                continue;
+
+            int newContent = frames[i].height() - result.overlap;
+            if (newContent < MIN_NEW_CONTENT) {
+                matched = true;
+                redundant = true;
+                break;
+            }
+
+            int candidateY;
+            if (result.direction == ScrollDirection::Down) {
+                candidateY = placed[j].y + placed[j].height - result.overlap;
             } else {
-                newContent = frames[i].height() - overlapResult.overlap;
-                if (newContent >= MIN_NEW_CONTENT) {
-                    scrollingUp = true;
-                    segments.append({&frames[i], 0, frames[i].height() - overlapResult.overlap});
-                    lastKept = i;
+                candidateY = placed[j].y - (frames[i].height() - result.overlap);
+            }
+
+            bool candidateRedundant = false;
+            for (int k = 0; k < placed.size(); ++k) {
+                int existingTop = placed[k].y;
+                int existingBottom = placed[k].y + placed[k].height;
+                int newTop = candidateY;
+                int newBottom = candidateY + frames[i].height();
+
+                int overlapTop = std::max(existingTop, newTop);
+                int overlapBottom = std::min(existingBottom, newBottom);
+                int overlapHeight = overlapBottom - overlapTop;
+
+                if (overlapHeight >= frames[i].height() - MIN_NEW_CONTENT) {
+                    candidateRedundant = true;
+                    break;
                 }
             }
+
+            if (!matched || candidateRedundant) {
+                newY = candidateY;
+                matched = true;
+                redundant = candidateRedundant;
+            }
+
+            if (candidateRedundant)
+                break;
+        }
+
+        if (!matched) {
+            anyFailed = true;
+            newY = placed.last().y + placed.last().height;
+        }
+
+        if (!redundant && matched) {
+            placed.append({i, newY, frames[i].height()});
+        } else if (!matched) {
+            placed.append({i, newY, frames[i].height()});
         }
     }
-    
-    if (scrollingUp) {
-        std::reverse(segments.begin(), segments.end());
-    }
-    
+
     if (anyFailed && errorOut) {
         *errorOut = "Some frames had no detectable overlap; result may have visible seams.";
     }
-    
-    int totalHeight = 0;
-    for (int i = 0; i < segments.size(); ++i) {
-        totalHeight += segments[i].endRow - segments[i].startRow;
+
+    std::sort(placed.begin(), placed.end(),
+              [](const PlacedFrame &a, const PlacedFrame &b) { return a.y < b.y; });
+
+    int minY = placed.first().y;
+    int maxY = placed.first().y + placed.first().height;
+    for (int i = 1; i < placed.size(); ++i) {
+        minY = std::min(minY, placed[i].y);
+        maxY = std::max(maxY, placed[i].y + placed[i].height);
     }
 
+    int totalHeight = maxY - minY;
     QImage result(width, totalHeight, QImage::Format_RGB32);
+    result.fill(Qt::white);
     QPainter painter(&result);
-    int y = 0;
-    for (auto &seg : segments) {
-        int h = seg.endRow - seg.startRow;
-        painter.drawImage(0, y,
-                          seg.image->copy(0, seg.startRow, width, h));
-        y += h;
+
+    int canvasBottom = minY;
+
+    for (int i = 0; i < placed.size(); ++i) {
+        int frameTop = placed[i].y;
+        int frameBottom = placed[i].y + placed[i].height;
+
+        int visibleTop = std::max(frameTop, canvasBottom);
+        int visibleBottom = frameBottom;
+        if (visibleTop >= visibleBottom)
+            continue;
+
+        int cropStart = visibleTop - frameTop;
+        int cropHeight = visibleBottom - visibleTop;
+        int drawY = visibleTop - minY;
+
+        painter.drawImage(0, drawY,
+                          frames[placed[i].frameIndex].copy(0, cropStart, width, cropHeight));
+
+        canvasBottom = std::max(canvasBottom, visibleBottom);
     }
+
     return result;
 }
