@@ -54,6 +54,7 @@ private slots:
     void onAnnotationToolChanged(Toolbar::AnnotationTool tool);
     void onUndoRequested();
     void onAnnotationDone();
+    void onPinClicked();
 
 protected:
     void paintEvent(QPaintEvent *event) override;
