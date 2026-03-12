@@ -68,3 +68,35 @@ void PinnedImageWidget::adjustWindowToContent()
     setFixedSize(m_scaledPixmap.size());
     m_closeButtonRect = QRect(width() - CloseButtonSize - 4, 4, CloseButtonSize, CloseButtonSize);
 }
+
+void PinnedImageWidget::paintEvent(QPaintEvent *event)
+{
+    Q_UNUSED(event)
+
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    if (!m_scaledPixmap.isNull()) {
+        painter.drawPixmap(0, 0, m_scaledPixmap);
+    }
+
+    QColor bgColor = m_closeButtonHovered ? QColor(220, 60, 60) : QColor(180, 180, 180, 200);
+    painter.setBrush(bgColor);
+    painter.setPen(Qt::NoPen);
+    painter.drawEllipse(m_closeButtonRect.adjusted(2, 2, -2, -2));
+
+    painter.setPen(Qt::white);
+    painter.drawLine(m_closeButtonRect.center() - QPoint(4, 4),
+                     m_closeButtonRect.center() + QPoint(4, 4));
+    painter.drawLine(m_closeButtonRect.center() + QPoint(-4, 4),
+                     m_closeButtonRect.center() + QPoint(4, -4));
+}
+
+void PinnedImageWidget::updateCloseButtonHover(const QPoint &pos)
+{
+    bool hovered = m_closeButtonRect.contains(pos);
+    if (hovered != m_closeButtonHovered) {
+        m_closeButtonHovered = hovered;
+        update(m_closeButtonRect);
+    }
+}
