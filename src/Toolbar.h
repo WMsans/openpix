@@ -39,6 +39,7 @@ signals:
     void ocrRequested();
     void annotateRequested();
     void scrollCaptureRequested();
+    void pinClicked();
     void annotationToolChanged(AnnotationTool tool);
     void undoRequested();
     void annotationDone();
