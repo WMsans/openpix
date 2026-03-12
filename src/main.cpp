@@ -27,20 +27,20 @@ int main(int argc, char *argv[])
             qDebug() << "Captured screenshot:" << image.size();
             auto overlay = new OverlayWidget(image, captureManager);
             auto shouldQuit = []() {
-    const auto &widgets = QApplication::topLevelWidgets();
-    for (QWidget *w : widgets) {
-        if (qobject_cast<PinnedImageWidget*>(w)) {
-            return false;
-        }
-    }
-    return true;
-};
+                const auto &widgets = QApplication::topLevelWidgets();
+                for (QWidget *w : widgets) {
+                    if (qobject_cast<PinnedImageWidget*>(w)) {
+                        return false;
+                    }
+                }
+                return true;
+            };
 
-QObject::connect(overlay, &OverlayWidget::cancelled, [=]() {
-    if (shouldQuit()) {
-        qApp->quit();
-    }
-});
+            QObject::connect(overlay, &OverlayWidget::cancelled, [=]() {
+                if (shouldQuit()) {
+                    qApp->quit();
+                }
+            });
             QObject::connect(overlay, &OverlayWidget::regionSelected, [&](const QRect &region) {
                 qDebug() << "Region selected:" << region;
                 app.quit();
