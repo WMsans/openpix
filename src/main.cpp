@@ -6,6 +6,7 @@
 #include "CaptureManager.h"
 #include "OverlayWidget.h"
 #include "OcrEngine.h"
+#include "PinnedImageWidget.h"
 
 int main(int argc, char *argv[])
 {
@@ -25,7 +26,21 @@ int main(int argc, char *argv[])
         &app, [&](const QImage &image) {
             qDebug() << "Captured screenshot:" << image.size();
             auto overlay = new OverlayWidget(image, captureManager);
-            QObject::connect(overlay, &OverlayWidget::cancelled, &app, &QApplication::quit);
+            auto shouldQuit = []() {
+    const auto &widgets = QApplication::topLevelWidgets();
+    for (QWidget *w : widgets) {
+        if (qobject_cast<PinnedImageWidget*>(w)) {
+            return false;
+        }
+    }
+    return true;
+};
+
+QObject::connect(overlay, &OverlayWidget::cancelled, [=]() {
+    if (shouldQuit()) {
+        qApp->quit();
+    }
+});
             QObject::connect(overlay, &OverlayWidget::regionSelected, [&](const QRect &region) {
                 qDebug() << "Region selected:" << region;
                 app.quit();
