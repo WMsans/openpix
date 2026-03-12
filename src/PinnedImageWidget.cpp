@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <QPainter>
 #include <QScreen>
+#include <QWheelEvent>
 
 PinnedImageWidget::PinnedImageWidget(const QImage &image, QWidget *parent)
     : QWidget(parent)
@@ -142,4 +143,33 @@ void PinnedImageWidget::leaveEvent(QEvent *event)
         m_closeButtonHovered = false;
         update(m_closeButtonRect);
     }
+}
+
+void PinnedImageWidget::wheelEvent(QWheelEvent *event)
+{
+    QPoint angleDelta = event->angleDelta();
+    if (angleDelta.y() == 0) {
+        return;
+    }
+
+    qreal delta = (angleDelta.y() > 0) ? ScaleStep : -ScaleStep;
+    qreal newScale = qBound(MinScale, m_scale + delta, MaxScale);
+
+    if (qFuzzyCompare(newScale, m_scale)) {
+        return;
+    }
+
+    QPointF localPos = event->position();
+    QPointF globalPos = event->globalPosition();
+
+    qreal scaleRatio = newScale / m_scale;
+    m_scale = newScale;
+
+    updateScaledPixmap();
+    adjustWindowToContent();
+
+    QPointF newLocalPos(localPos.x() * scaleRatio, localPos.y() * scaleRatio);
+    QPoint newWindowPos(static_cast<int>(globalPos.x() - newLocalPos.x()),
+                        static_cast<int>(globalPos.y() - newLocalPos.y()));
+    move(newWindowPos);
 }
