@@ -49,18 +49,21 @@ void Toolbar::setupMainToolbar()
     auto *ocrBtn = new QPushButton("OCR", m_mainWidget);
     auto *annotateBtn = new QPushButton("Annotate", m_mainWidget);
     auto *scrollBtn = new QPushButton("Scroll", m_mainWidget);
+    auto *pinBtn = new QPushButton("Pin", m_mainWidget);
 
     connect(saveBtn, &QPushButton::clicked, this, &Toolbar::onSaveClicked);
     connect(copyBtn, &QPushButton::clicked, this, &Toolbar::onCopyClicked);
     connect(ocrBtn, &QPushButton::clicked, this, &Toolbar::onOcr);
     connect(annotateBtn, &QPushButton::clicked, this, &Toolbar::annotateRequested);
     connect(scrollBtn, &QPushButton::clicked, this, &Toolbar::scrollCaptureRequested);
+    connect(pinBtn, &QPushButton::clicked, this, &Toolbar::pinClicked);
 
     m_mainLayout->addWidget(saveBtn);
     m_mainLayout->addWidget(copyBtn);
     m_mainLayout->addWidget(ocrBtn);
     m_mainLayout->addWidget(annotateBtn);
     m_mainLayout->addWidget(scrollBtn);
+    m_mainLayout->addWidget(pinBtn);
 
     auto *layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);

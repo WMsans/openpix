@@ -4,6 +4,7 @@
 #include "ScrollCapture.h"
 #include "LongImageWidget.h"
 #include "CaptureManager.h"
+#include "PinnedImageWidget.h"
 #include <QPainter>
 #include <QPainterPath>
 #include <QMouseEvent>
@@ -42,6 +43,7 @@ OverlayWidget::OverlayWidget(const QImage &screenshot, CaptureManager *captureMa
     connect(m_toolbar, &Toolbar::annotationToolChanged, this, &OverlayWidget::onAnnotationToolChanged);
     connect(m_toolbar, &Toolbar::undoRequested, this, &OverlayWidget::onUndoRequested);
     connect(m_toolbar, &Toolbar::annotationDone, this, &OverlayWidget::onAnnotationDone);
+    connect(m_toolbar, &Toolbar::pinClicked, this, &OverlayWidget::onPinClicked);
     connect(m_toolbar, &Toolbar::quitRequested, this, []{
         qApp->quit();
     });
@@ -469,6 +471,19 @@ void OverlayWidget::onAnnotationDone()
     }
     updateToolbarPosition();
     update();
+}
+
+void OverlayWidget::onPinClicked()
+{
+    QImage cropped = croppedImage();
+    if (cropped.isNull() || cropped.size().isEmpty()) {
+        return;
+    }
+
+    auto *pinned = new PinnedImageWidget(cropped);
+    pinned->show();
+
+    close();
 }
 
 void OverlayWidget::startScrollCapture()
