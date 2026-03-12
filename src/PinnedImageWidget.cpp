@@ -100,3 +100,46 @@ void PinnedImageWidget::updateCloseButtonHover(const QPoint &pos)
         update(m_closeButtonRect);
     }
 }
+
+void PinnedImageWidget::mousePressEvent(QMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton) {
+        if (m_closeButtonRect.contains(event->pos())) {
+            close();
+            return;
+        }
+
+        m_dragging = true;
+        m_dragStart = event->globalPosition().toPoint();
+        m_windowStart = pos();
+        setCursor(Qt::ClosedHandCursor);
+    }
+}
+
+void PinnedImageWidget::mouseMoveEvent(QMouseEvent *event)
+{
+    QPoint pos = event->pos();
+    updateCloseButtonHover(pos);
+
+    if (m_dragging) {
+        QPoint delta = event->globalPosition().toPoint() - m_dragStart;
+        move(m_windowStart + delta);
+    }
+}
+
+void PinnedImageWidget::mouseReleaseEvent(QMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton) {
+        m_dragging = false;
+        setCursor(Qt::ArrowCursor);
+    }
+}
+
+void PinnedImageWidget::leaveEvent(QEvent *event)
+{
+    Q_UNUSED(event)
+    if (m_closeButtonHovered) {
+        m_closeButtonHovered = false;
+        update(m_closeButtonRect);
+    }
+}
