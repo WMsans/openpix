@@ -21,17 +21,16 @@ PinnedImageWidget::PinnedImageWidget(const QImage &image, QWidget *parent)
     }
     QRect screenGeometry = screen->availableGeometry();
 
-    if (width > screenGeometry.width() * 0.8) {
-        qreal ratio = (screenGeometry.width() * 0.8) / width;
-        width = static_cast<int>(width * ratio);
-        height = static_cast<int>(height * ratio);
-        m_scale = ratio;
-    }
-    if (height > screenGeometry.height() * 0.8) {
-        qreal ratio = (screenGeometry.height() * 0.8) / height;
-        width = static_cast<int>(width * ratio);
-        height = static_cast<int>(height * ratio);
-        m_scale = ratio;
+    qreal widthRatio = 1.0;
+    qreal heightRatio = 1.0;
+    if (width > screenGeometry.width() * 0.8)
+        widthRatio = (screenGeometry.width() * 0.8) / width;
+    if (height > screenGeometry.height() * 0.8)
+        heightRatio = (screenGeometry.height() * 0.8) / height;
+    m_scale = qMin(widthRatio, heightRatio);
+    if (m_scale < 1.0) {
+        width = static_cast<int>(m_image.width() * m_scale);
+        height = static_cast<int>(m_image.height() * m_scale);
     }
 
     setFixedSize(width, height);
