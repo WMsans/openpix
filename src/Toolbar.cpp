@@ -27,6 +27,7 @@ Toolbar::Toolbar(OverlayWidget *overlay, QWidget *parent)
     , m_overlay(overlay)
     , m_annotationColor(Colors[0])
 {
+    setWindowTitle("OpenPix Toolbar");
     setWindowFlags(Qt::FramelessWindowHint | Qt::Tool);
     setAttribute(Qt::WA_ShowWithoutActivating);
 

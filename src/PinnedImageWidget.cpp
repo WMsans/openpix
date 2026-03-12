@@ -9,6 +9,7 @@ PinnedImageWidget::PinnedImageWidget(const QImage &image, QWidget *parent)
     : QWidget(parent)
     , m_image(image)
 {
+    setWindowTitle("OpenPix Pinned");
     setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
     setAttribute(Qt::WA_DeleteOnClose);
     setMouseTracking(true);

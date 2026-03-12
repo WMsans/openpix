@@ -28,6 +28,7 @@ LongImageWidget::LongImageWidget(const QImage &image, QWidget *parent)
     , m_annotationManager(std::make_unique<AnnotationManager>())
     , m_annotationColor(Colors[0])
 {
+    setWindowTitle("OpenPix Long Screenshot");
     setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::BypassWindowManagerHint);
     setAttribute(Qt::WA_DeleteOnClose);
     setMouseTracking(true);
