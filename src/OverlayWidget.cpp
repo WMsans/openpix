@@ -413,16 +413,16 @@ void OverlayWidget::keyPressEvent(QKeyEvent *event)
         break;
     case Qt::Key_C:
         if (event->modifiers() & Qt::ControlModifier && m_selection.isValid()) {
-            onCopyRequested();
+            m_toolbar->onCopyClicked();
         } else if (event->modifiers() & Qt::ShiftModifier && m_selection.isValid()) {
-            onOcrRequested();
+            m_toolbar->onOcr();
         } else {
             QWidget::keyPressEvent(event);
         }
         break;
     case Qt::Key_S:
         if (event->modifiers() & Qt::ControlModifier && m_selection.isValid()) {
-            onSaveRequested();
+            m_toolbar->onSaveClicked();
         } else {
             QWidget::keyPressEvent(event);
         }

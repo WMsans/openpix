@@ -33,6 +33,10 @@ public:
     int annotationThickness() const { return m_annotationThickness; }
     AnnotationTool annotationTool() const { return m_annotationTool; }
 
+    void onSaveClicked();
+    void onCopyClicked();
+    void onOcr();
+
 signals:
     void saveRequested();
     void copyRequested();
@@ -55,9 +59,6 @@ private:
     void onRectClicked();
     void onUndoClicked();
     void onDoneClicked();
-    void onSaveClicked();
-    void onCopyClicked();
-    void onOcr();
     void updateColorButton();
     void updateThicknessButton();
 
