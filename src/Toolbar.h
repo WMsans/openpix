@@ -61,6 +61,10 @@ private:
     void updateColorButton();
     void updateThicknessButton();
 
+protected:
+    void keyPressEvent(QKeyEvent *event) override;
+
+private:
     OverlayWidget *m_overlay;
     QHBoxLayout *m_mainLayout = nullptr;
     QHBoxLayout *m_annotationLayout = nullptr;
