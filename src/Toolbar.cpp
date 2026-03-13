@@ -17,10 +17,18 @@
 #include <QtConcurrent>
 #include <QProcess>
 #include <QBuffer>
+#include <QKeyEvent>
 #include <iostream>
 
 const QColor Toolbar::Colors[6] = {Qt::red, Qt::green, Qt::blue, Qt::yellow, Qt::white, Qt::black};
 constexpr int Toolbar::Thicknesses[];
+
+void Toolbar::keyPressEvent(QKeyEvent *event)
+{
+    if (m_overlay) {
+        QCoreApplication::sendEvent(m_overlay, static_cast<QEvent *>(event));
+    }
+}
 
 Toolbar::Toolbar(OverlayWidget *overlay, QWidget *parent)
     : QWidget(parent)

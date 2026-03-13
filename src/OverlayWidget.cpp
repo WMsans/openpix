@@ -411,6 +411,29 @@ void OverlayWidget::keyPressEvent(QKeyEvent *event)
             update();
         }
         break;
+    case Qt::Key_C:
+        if (event->modifiers() & Qt::ControlModifier && m_selection.isValid()) {
+            m_toolbar->onCopyClicked();
+        } else if (event->modifiers() & Qt::ShiftModifier && m_selection.isValid()) {
+            m_toolbar->onOcr();
+        } else {
+            QWidget::keyPressEvent(event);
+        }
+        break;
+    case Qt::Key_S:
+        if (event->modifiers() & Qt::ControlModifier && m_selection.isValid()) {
+            m_toolbar->onSaveClicked();
+        } else {
+            QWidget::keyPressEvent(event);
+        }
+        break;
+    case Qt::Key_T:
+        if (event->modifiers() & Qt::ControlModifier && m_selection.isValid()) {
+            onPinClicked();
+        } else {
+            QWidget::keyPressEvent(event);
+        }
+        break;
     default:
         QWidget::keyPressEvent(event);
     }
