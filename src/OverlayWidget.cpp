@@ -317,7 +317,7 @@ void OverlayWidget::mouseMoveEvent(QMouseEvent *event)
             r = QRect(m_initialSelection.topLeft(), QPoint(m_initialSelection.right(), m_initialSelection.bottom() + delta.y()));
             break;
         case Handle::BottomRight:
-            r = QRect(m_selection.topLeft(), m_selection.bottomRight() + delta);
+            r = QRect(m_initialSelection.topLeft(), m_initialSelection.bottomRight() + delta);
             break;
         default:
             r = m_selection;
