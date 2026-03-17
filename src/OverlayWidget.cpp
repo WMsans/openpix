@@ -82,7 +82,7 @@ QImage OverlayWidget::croppedImage() const
         std::cout << "Saved selection to /tmp/selection_debug.png" << std::endl;
         
         if (m_annotationManager && m_annotationManager->hasAnnotations()) {
-            return m_annotationManager->composite(m_screenshot, scaledSelection);
+            return m_annotationManager->composite(m_screenshot, scaledSelection, scaleX, scaleY);
         }
         return base;
     }
@@ -110,7 +110,7 @@ void OverlayWidget::paintEvent(QPaintEvent *event)
     painter.fillRect(rect(), QColor(0, 0, 0, 128));
     painter.setClipping(false);
 
-    if (m_annotationManager && m_annotationMode) {
+    if (m_annotationManager && (m_annotationManager->hasAnnotations() || m_annotationMode)) {
         m_annotationManager->paint(painter, m_selection);
     }
 
