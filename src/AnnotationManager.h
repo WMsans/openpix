@@ -49,7 +49,7 @@ public:
     int annotationCount() const;
 
     void paint(QPainter &painter, const QRect &clipRect = QRect()) const;
-    QImage composite(const QImage &baseImage, const QRect &region) const;
+    QImage composite(const QImage &baseImage, const QRect &region, double scaleX, double scaleY) const;
 
 private:
     Tool m_tool = Tool::Freehand;

@@ -307,7 +307,7 @@ void LongImageWidget::setupToolbar()
 QImage LongImageWidget::compositeImage() const
 {
     if (m_annotationManager && m_annotationManager->hasAnnotations()) {
-        return m_annotationManager->composite(m_image, m_image.rect());
+        return m_annotationManager->composite(m_image, m_image.rect(), 1.0, 1.0);
     }
     return m_image;
 }
