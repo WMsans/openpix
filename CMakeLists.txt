@@ -8,6 +8,11 @@ set(CMAKE_AUTOMOC ON)
 # --- Dependencies ---
 find_package(Qt6 REQUIRED COMPONENTS Widgets Gui DBus Concurrent)
 find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs)
+
+# OpenCV 5 moved minAreaRect/getPerspectiveTransform into the geometry module
+if(OpenCV_VERSION_MAJOR GREATER_EQUAL 5)
+    find_package(OpenCV REQUIRED COMPONENTS geometry)
+endif()
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(WAYLAND_CLIENT REQUIRED wayland-client)
 
@@ -84,6 +89,13 @@ set(RAPIDOCR_SOURCES
     ${rapidocr_SOURCE_DIR}/src/OcrResultUtils.cpp
     ${rapidocr_SOURCE_DIR}/src/OcrUtils.cpp
 )
+
+# OpenCV 5 relocated some functions (minAreaRect, getPerspectiveTransform) into the
+# geometry module; force-include the header so the vendored RapidOcr sources compile.
+if(OpenCV_VERSION_MAJOR GREATER_EQUAL 5)
+    set_source_files_properties(${RAPIDOCR_SOURCES} PROPERTIES
+        COMPILE_OPTIONS "-include;opencv2/geometry.hpp")
+endif()
 
 # --- Main executable ---
 add_executable(openpix
