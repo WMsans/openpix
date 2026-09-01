@@ -1,4 +1,0 @@
-set(__QT_DEPLOY_TARGET_openpix_FILE /home/jeremy/Development/openpix/openpix)
-set(__QT_DEPLOY_TARGET_openpix_TYPE EXECUTABLE)
-set(__QT_DEPLOY_TARGET_test_stitcher_FILE /home/jeremy/Development/openpix/test_stitcher)
-set(__QT_DEPLOY_TARGET_test_stitcher_TYPE EXECUTABLE)

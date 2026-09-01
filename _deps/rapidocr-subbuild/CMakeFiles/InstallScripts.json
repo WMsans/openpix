@@ -1,7 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"/home/jeremy/Development/openpix/_deps/rapidocr-subbuild/cmake_install.cmake"
-	],
-	"Parallel" : false
-}
